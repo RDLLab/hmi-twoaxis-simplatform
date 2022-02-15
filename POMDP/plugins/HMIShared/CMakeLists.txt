@@ -1,0 +1,5 @@
+set(HMI_STRUCTURES_SRC
+    ${CMAKE_CURRENT_LIST_DIR}/HMIDataStructures.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HMIState.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HMIObservation.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HMIRandomAgent.cpp)

@@ -1,0 +1,24 @@
+!SESSION 2021-12-09 12:51:44.425 -----------------------------------------------
+eclipse.buildId=${build.id}
+java.version=1.8.0_171
+java.vendor=Oracle Corporation
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_AU
+Command-line arguments:  -os linux -ws gtk -arch x86_64 -data @noDefault
+
+!ENTRY org.eclipse.ui 4 4 2021-12-09 12:51:51.333
+!MESSAGE Unable to create part
+!SUBENTRY 1 org.eclipse.ui 4 0 2021-12-09 12:51:51.333
+!MESSAGE Input doesn't exist
+
+!ENTRY org.eclipse.core.jobs 4 2 2021-12-09 12:52:05.990
+!MESSAGE An internal error occurred during: "Xtext validation".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.xtext.ui.editor.validation.AddMarkersOperation.execute(AddMarkersOperation.java:113)
+	at org.eclipse.ui.actions.WorkspaceModifyOperation.lambda$0(WorkspaceModifyOperation.java:110)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2295)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2322)
+	at org.eclipse.ui.actions.WorkspaceModifyOperation.run(WorkspaceModifyOperation.java:131)
+	at org.eclipse.xtext.ui.editor.validation.MarkerIssueProcessor.processIssues(MarkerIssueProcessor.java:77)
+	at msi.gama.lang.gaml.ui.editor.GamlEditor$2.run(GamlEditor.java:366)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)

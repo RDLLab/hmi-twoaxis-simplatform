@@ -1,0 +1,5 @@
+include(${CMAKE_CURRENT_LIST_DIR}/../../HMIShared/CMakeLists.txt)
+set(HMI_OBSERVATION_SRC
+    ${CMAKE_CURRENT_LIST_DIR}/HMIObservationPlugin.cpp
+    ${HMI_STRUCTURES_SRC})
+ADD_OBSERVATION_PLUGIN(hmiObservationPlugin "${HMI_OBSERVATION_SRC}")

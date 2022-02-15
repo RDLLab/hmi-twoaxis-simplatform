@@ -1,0 +1,1 @@
+ADD_INITIAL_BELIEF_PLUGIN(hmiInitialBeliefPlugin ${CMAKE_CURRENT_LIST_DIR}/HMIInitialBeliefPlugin.cpp)

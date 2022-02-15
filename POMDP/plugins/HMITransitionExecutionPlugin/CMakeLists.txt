@@ -1,0 +1,5 @@
+include(${CMAKE_CURRENT_LIST_DIR}/../../HMIShared/CMakeLists.txt)
+set(HMI_TRANSITION_EXECUTION_SRC
+    ${CMAKE_CURRENT_LIST_DIR}/HMITransitionExecutionPlugin.cpp
+    ${HMI_STRUCTURES_SRC})
+ADD_TRANSITION_PLUGIN(hmiTransitionExecutionPlugin "${HMI_TRANSITION_EXECUTION_SRC}")
