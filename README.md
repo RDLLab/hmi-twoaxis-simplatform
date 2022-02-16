@@ -32,16 +32,14 @@ The simulator interacts with the OPPT solver by sending and receiving informatio
 
 When the simulation starts, it also sends some information to the solver needed to run the simulation using a series of files. These files encode information about the problem’s grid and the details and condition change matrices for each random agent.
 
-Note that GAMA represents matrices in $(x,y)$ form as opposed to row-column form. An example is shown below, with the GAMA matrix representation shown on the left and the traditional matrix representation shown on the right.
+Note that GAMA represents matrices in $$(x,y)$$ form as opposed to row-column form. An example is shown below, with the GAMA matrix representation shown on the left and the traditional matrix representation shown on the right.
 
 ```
 [0.9, 0.0, 0.0, 0.5]
-[0.1, 0.8, 0.0, 0.0]
-[0.0, 0.1, 1.0, 0.5]
-[0.0, 0.1, 0.0, 0.0]
+[0.1, 0.8, 0.0, 0.0]                    [0.0, 0.1, 1.0, 0.5]                   [0.0, 0.1, 0.0, 0.0]
 ```
 
-${\begin{bmatrix} 0.9 & 0.1 & 0.0 & 0.0\\ 0.0 & 0.8 & 0.1 & 0.1\\ 0.0 & 0.0 & 1.0 & 0.0\\ 0.5 & 0.0 & 0.5 & 0.0\\ \end{bmatrix}}$
+$${\begin{bmatrix} 0.9 & 0.1 & 0.0 & 0.0\\ 0.0 & 0.8 & 0.1 & 0.1\\ 0.0 & 0.0 & 1.0 & 0.0\\ 0.5 & 0.0 & 0.5 & 0.0\\ \end{bmatrix}}$$
 
 GAMA also takes data from the solver’s configuration file, namely the initial state of the problem, so that it can initialise the locations and conditions of each helper robot and random agent.
 
@@ -60,7 +58,7 @@ Each random agent has a type and an ID. A random agent’s type determines what 
 
 ### Helper Robots
 
-Helper robots serve to help random agents according to a certain ethical framework. This is defined in the OPPT solver. In the GAMA simulation, their state contains their location, their current action (as well as how to complete it), the location of each random agent in the problem, and their belief of the condition of each random agent in the problem. 
+Helper robots serve to help random agents according to a certain ethical framework. This is defined in the OPPT solver. In the GAMA simulation, their state contains their location, their current action (as well as how to complete it), the location of each random agent in the problem, and their belief of the condition of each random agent in the problem.
 
 While the method in which helper robots observe random agent conditions is still to be defined, it has previously been defined by a combination of probability and “sight”. One agent “seeing” another is defined by the existence of a line `y = mx + c` existing between the two agents that does not cross a wall in the problem grid. If a helper robot can “see” a random agent, then it has a 0.8 probability of observing its condition.
 
@@ -76,10 +74,28 @@ If a helper robot happens to share the same cell as a random agent, it will imme
 
 At present, the solver for this problem uses the default ABT solver.
 
+### Initial State
+
+The initial state (and therefore, initial belief) is instantiated by the user via the GAMA experiment GUI.
+
+### Transition Plugin
+
+There are two transition plugins: one where OPPT runs its own internal model for planning, and another where it communicates with GAMA for execution. The model in both of these plugins is the same.
+
+The transition plugin takes a state $$S$$ and an action $$A$$ as input. As mentioned before, $$A$$ is a Cartesian coordinate $$(x,y)$$. The helper robot must move towards this location on the grid as its action. If there are any random agents at $$(x,y)$$, they immediately stop and cannot change condition until the helper robot arrives at their location. Once the helper robot has arrived at their location, their condition becomes 0 (happy). This behaviour applies in general: if a helper robot shares a cell with a random agent, the random agent’s condition instantly becomes 0.
+
+Executing an action as defined in this model takes up several “cycles” (individual timesteps) in GAMA. That is, while the helper robot is busy moving towards its destination, the other agents in the problem will also be doing certain actions. Each random agent follows a certain stochastic condition transition matrix depending on its type (examples include elderly, baby etc.). If a random agent’s condition is 0 (happy), there is also a 50% chance that it moves one space on the board in a random direction (unless it would move into a wall in that direction, in which case it doesn’t move).
+
+### Observation Plugin
+
+Like the transition plugins in this model, there are two observation plugins: one where OPPT runs its own internal model for planning, and another where it communicates with GAMA for execution. Again, the model in both of these plugins is the same.
+
+Given a state $$S$$ and an action $$A$$, the observation plugin will return a list of condition observations $$c$$, where observation $$c_i$$ corresponds to the observed condition of the $$i$$-th random agent $$R_i$$. As mentioned in the transition plugin, whenever a helper robot shares a cell with a random agent, the random agent’s condition instantly becomes 0. The helper robot is guaranteed to observe this agent’s new condition when this happens.
+
+Apart from this, helper robots have a `0.8` probability of observing a random agent’s condition at each timestep in GAMA, for each random agent.
+
+If no helper robot observes $$c_i$$ for random agent $$R_i$$ during the execution of $$A$$, then this value is the same value as $$c_i$$ in $$S$$.
+
 ### Reward Plugin
 
 The reward plugin maximally rewards the solver if all random agents have condition `0`, that is, if all random agents in the problem are happy. If there are unhappy random agents (ones that do not have condition `0`), then the solver is penalised depending on how many random agents are unhappy and how far the robot is away from these unhappy agents.
-
-### Planning vs Execution
-
-The OPPT solver has different transition and observation plugins depending on whether the solver is planning or executing a POMDP problem. The planning plugins must reflect the GAMA model as accurately as possible, otherwise there will be inconsistencies when executing the problem.
