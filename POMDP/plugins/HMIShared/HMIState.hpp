@@ -1,11 +1,13 @@
 #ifndef _HMI_STATE_HPP_
 #define _HMI_STATE_HPP_
 
-#include "HMIRoobot.hpp"
+#include "HMIRobot.hpp"
 #include "oppt/opptCore/core.hpp"
 #include <vector>
 #include <unordered_map>
 #include <utility>
+#include <set>
+#include <iterator>
 
 namespace oppt
 {
@@ -29,6 +31,8 @@ public:
     // The number of variable fields belonging to each random agent.
     static const int RANDOM_AGENT_ELEMENTS = 3;
 
+    static const int ROBOT_ELEMENTS = 2;
+
     /**
      * Constructor for HMIState. Takes a vector of integers and enriches
      * it into an easier-to-use data structure.
@@ -49,16 +53,8 @@ public:
     HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, Grid grid);
 
     HMIState(VectorFloat stateVec, Grid grid);
-    
-    Coordinate getRobotCoordinates();
 
-    int getRobotX();
-
-    int getRobotY();
-
-    void setRobotX(int x);
-
-    void setRobotY(int y);
+    std::vector<HMIRobot> getRobots();
 
     Grid getGrid();
 
@@ -69,7 +65,7 @@ public:
      * 
      * @param numberOfTurns the number of turns for which to sample agent movement
     **/
-    void sampleMovement(int numberOfTurns, HMIRandomAgent *targetAgent);
+    void sampleMovement(int numberOfTurns, std::set<HMIRandomAgent*> targetAgents);
 
     /**
      * Returns a vector of integers representing the variable elements of this
@@ -81,11 +77,8 @@ public:
 
 private:
 
-    // The x-coordinate of the robot.
-    int robotX_;
-
-    // The y-coordinate of the robot.
-    int robotY_;
+    // The robots in the state
+    std::vector<HMIRobot> robots_;
 
     // All of the random agents in the given problem.
     std::vector<HMIRandomAgent> randomAgents_;

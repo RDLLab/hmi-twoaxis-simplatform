@@ -45,10 +45,17 @@ public:
 
         VectorFloat currentState(propagationRequest->currentState->as<VectorState>()->asVector());
         VectorFloat actionVec = propagationRequest->action->as<VectorAction>()->asVector();
-        int xAction = round(actionVec[0]);
-        int yAction = round(actionVec[1]);
 
-        std::string cmd = "echo -n " + std::to_string(xAction) + "," + std::to_string(yAction) + " > " + pipePathToGama_;
+        std::string cmd = "echo -n ";
+
+        for (size_t i = 0; i != actionVec.size() / 2; ++i) {
+            int xAction = (int) actionVec[2*i];
+            int yAction = (int) actionVec[2*i + 1];
+
+            std::string cmd += std::to_string(xAction) + "," + std::to_string(yAction) ",";
+        }
+
+        cmd = cmd.substr(0, cmd.size() - 1) + " > " + pipePathToGama_;
         std::cout << "About to send action to solver..." << std::endl;
         FILE * pipeToGama(popen(cmd.c_str(), "w"));
         pclose(pipeToGama);

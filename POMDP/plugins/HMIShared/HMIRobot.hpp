@@ -8,7 +8,22 @@ namespace oppt
 namespace hmi
 {
 
+class HMIRobot {
 
+public:
+    
+    HMIRobot(int x, int y);
+
+    Coordinate getCoordinates();
+
+    void setCoordinates(Coordinate coordinate);
+
+private:
+    Coordinate coordinates_;
+
+};
 
 }
 }
+
+#endif

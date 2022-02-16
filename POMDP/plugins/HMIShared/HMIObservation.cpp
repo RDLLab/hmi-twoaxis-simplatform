@@ -14,20 +14,6 @@ HMIObservation::HMIObservation(HMIState &currentState) {
     }
 }
 
-HMIObservation::HMIObservation(HMIState &currentState, HMIRandomAgent* targetAgent) {
-    underlyingState_ = &currentState;
-    for (HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
-        if (targetAgent && targetAgent == &randomAgent) {
-            observations_.insert(std::make_pair(&randomAgent, true));
-            randomAgent.setCondition(0);
-        }
-        else {
-            observations_.insert(std::make_pair(&randomAgent, false));
-        }
-        originalConditions_.push_back(randomAgent.getCondition());
-    }
-}
-
 HMIState HMIObservation::getUnderlyingState() {
     return *underlyingState_;
 }
@@ -38,14 +24,10 @@ std::unordered_map<HMIRandomAgent*, bool> HMIObservation::getObservations() {
 
 void HMIObservation::makeObservations() {
 
-    // Store the underlying state's robot coordinates.
-    Coordinate robotCoords = getUnderlyingState().getRobotCoordinates();
-
     for (HMIRandomAgent randomAgent : getUnderlyingState().getRandomAgents()) {
 
         // If the agent is calling for help or the robot can see its condition, we add
         // its condition being observed to the observation vector.
-        Coordinate randomAgentCoords = randomAgent.getCoords();
         if (testConditionProbability())
             observations_.at(&randomAgent) = true;
     }

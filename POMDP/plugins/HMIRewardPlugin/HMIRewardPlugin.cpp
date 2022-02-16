@@ -48,37 +48,31 @@ public:
         // Initialise resulting reward value.
         FloatType reward = 0.0;
 
-        std::cout << "Getting action coordinates..." << std::endl;
-        int actionX = (int) actionVec[0];
-        int actionY = (int) actionVec[1];
-
-        std::cout << "Setting invalid grid cell conditions..." << std::endl;
-        bool xOutOfGrid = actionX < 0 || actionX >= currentState.getGrid().getWidth();
-        bool yOutOfGrid = actionY < 0 || actionY >= currentState.getGrid().getHeight();
-        bool invalidCell = !currentState.getGrid().getGrid()[hmi::Coordinate(actionX, actionY).toPosition(currentState.getGrid())];
-
-        // Get robot coordinates.
-        //int robotX = currentState.getRobotCoordinates().first;
-        //int robotY = currentState.getRobotCoordinates().second;
-
-        //bool xOutOfGrid = robotX < 0 || robotX >= currentState.getGrid().width_;
-        //bool yOutOfGrid = robotY < 0 || robotY >= currentState.getGrid().height_;
-        //bool invalidCell = !currentState.getGrid().grid_[robotX][robotY];
-
-        if (xOutOfGrid || yOutOfGrid || invalidCell) {
-            std::cout << "Action was " << std::to_string(actionVec[0]) << " " << std::to_string(actionVec[1]) << std::endl;
-            std::cout << "Returned min reward!\n";
-            return hmi::MIN_REWARD;
+        for (size_t i = 0; i != actionVec.size(); i += 2) {
+            hmi::Coordinate action((int) actionVec[i], (int) actionVec[i+1]);
+            bool invalidCell = !currentState.getGrid().getGrid()[action.toPosition(currentState.getGrid())];
+            if (invalidCell) return hmi::MIN_REWARD;
         }
 
         std::cout << "Setting happiness variables..." << std::endl;
         int numHappy = 0;
         bool allHappy = true;
+        VectorInt distances(currentState.getRandomAgents().size());
 
         std::cout << "Checking happiness of each random agent..." << std::endl;
-        for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
+        for (size_t i = 0; i != currentState.getRandomAgents().size(); ++i) {
+            hmi::HMIRandomAgent randomAgent = currentState.getRandomAgents()[i];
             if (randomAgent.getCondition() == 0) ++numHappy;
-            else                                 allHappy = false;
+            else {
+                allHappy = false;
+                int randomX = randomAgent.getCoords().getX();
+                int randomY = randomAgent.getCoords().getY();
+                distances[i] = std::max(2, hmi::getShortestPath(grid_, actionVec[0], actionVec[1], randomX, randomY).first);
+                for (size_t j = 2; j != actionVec.size(); j += 2) {
+                    int dist = std::max(2, hmi::getShortestPath(grid_, actionVec[j], actionVec[j+1], randomX, randomY).first);
+                    distances[i] = std::min(distances[i], dist);
+                }
+            }
         }
 
         if (allHappy) {
@@ -86,13 +80,9 @@ public:
             return hmi::MAX_REWARD;
         }
 
-        for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
-            if (randomAgent.getCondition() != 0) {
-                int randomX = randomAgent.getCoords().getX();
-                int randomY = randomAgent.getCoords().getY();
-                std::cout << "Calculating reward for actionX = " + std::to_string(actionX) + ", actionY = " + std::to_string(actionY) + ", randomX = " + std::to_string(randomX) + ", randomY = " + std::to_string(randomY) << std::endl;
-                std::cout << "Distance between two agents is " << std::to_string(hmi::getShortestPath(grid_, actionX, actionY, randomX, randomY).first) << std::endl;
-                reward += numHappy * hmi::BASE_REWARD / std::max(2, hmi::getShortestPath(grid_, actionX, actionY, randomX, randomY).first);
+        for (size_t i = 0; i != currentState.getRandomAgents().size(); ++i) {
+            if (currentState.getRandomAgents()[i].getCondition() != 0)  {
+                reward += numHappy * hmi::BASE_REWARD / distances[i];
             }
             else {
                 reward += numHappy * hmi::BASE_REWARD;
