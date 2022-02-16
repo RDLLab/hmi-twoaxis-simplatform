@@ -1,7 +1,7 @@
 #ifndef _HMI_STATE_HPP_
 #define _HMI_STATE_HPP_
 
-#include "HMIRandomAgent.hpp"
+#include "HMIRoobot.hpp"
 #include "oppt/opptCore/core.hpp"
 #include <vector>
 #include <unordered_map>
