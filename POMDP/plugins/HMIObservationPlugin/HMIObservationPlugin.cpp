@@ -71,42 +71,50 @@ public:
 
         // Determine what action will be made from the given data.
         VectorFloat actionVec = observationRequest->action->as<VectorAction>()->asVector();
-        int actionX = (int) actionVec[0];
-        int actionY = (int) actionVec[1];
-
-        hmi::HMIRandomAgent* targetAgent = NULL;
-        for (hmi::HMIRandomAgent randAg : hmiState.getRandomAgents()) {
-            if (randAg.getX() == actionX && randAg.getY() == actionY) {
-                targetAgent = &randAg;
-                break;
-            }
-        }
-
-        int robotX = hmiState.getRobotX();
-        int robotY = hmiState.getRobotY();
-
-        std::pair<int, std::string> shortestPath = hmi::getShortestPath(grid_, robotX, robotY, actionX, actionY);
-        std::string path = shortestPath.second;
-
-        for (int i = 0; i < shortestPath.first; i++) {
-
-            // Move the robot accordingly along the y-axis.
-            if (path.at(i) == 'N')      hmiState.setRobotY(hmiState.getRobotY() - 1);
-            else if (path.at(i) == 'S') hmiState.setRobotY(hmiState.getRobotY() + 1);
-
-            // Move the robot accordingly along the x-axis.
-            else if (path.at(i) == 'E') hmiState.setRobotX(hmiState.getRobotX() + 1);
-            else                        hmiState.setRobotX(hmiState.getRobotX() - 1);
-
-            for (hmi::HMIRandomAgent randomAgent : hmiState.getRandomAgents()) {
-                if (randomAgent.getCoords() == hmiState.getRobotCoordinates()) {
+         std::set<hmi::HMIRandomAgent*> targetAgents;
+        for (size_t i = 0; i != actionVec.size(); i += 2) {
+            int actionX = actionVec[i];
+            int actionY = actionVec[i + 1];
+            for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
+                if (randomAgent.getCoords().getX() == actionX && randomAgent.getCoords().getY() == actionY) {
+                    targetAgents.insert(&randomAgent);
                     randomAgent.setCondition(0);
                     hmiObservation.getObservations().at(&randomAgent) = true;
                 }
-            } 
+            }
+        }
 
-            // Sample movement for random agents and make an observation from this.
-            hmiState.sampleMovement(1, targetAgent);
+        std::vector<std::pair<int, std::string>> shortestPaths(currentState.getRobots().size());
+        int maxShortestPath = -1;
+        for (size_t i = 0; i != currentState.getRobots().size(); ++i) {
+            hmi::HMIRobot robot = currentState.getRobots()[i];
+            int robotX = robot.getCoordinates().getX();
+            int robotY = robot.getCoordinates().getY();
+            int actionX = (int) actionVec[2*i];
+            int actionY = (int) actionVec[2*i + 1];
+            shortestPaths[i] = hmi::getShortestPath(grid_, robotX, robotY, actionX, actionY);
+            maxShortestPath = std::max(shortestPaths[i].first, maxShortestPath);
+        }
+
+        for (size_t i = 0; i != maxShortestPath; ++i) {
+            for (size_t j = 0; j != currentState.getRobots().size(); ++j) {
+                if (i < shortestPaths[j].size()) {
+                    hmi::HMIRobot robot = currentState.getRobots()[j];
+                    hmi::Coordinate robotCoords = robot.getCoordinates();
+                    std::string path = shortestPaths[j].second;
+                    if (path.at(i) == 'N')      robot.setCoordinates(hmi::Coordinate(robot.getCoordinates().getX(), robot.getCoordinates.getY() - 1));
+                    else if (path.at(i) == 'S') robot.setCoordinates(hmi::Coordinate(robot.getCoordinates().getX(), robot.getCoordinates.getY() + 1));
+                    else if (path.at(i) == 'E') robot.setCoordinates(hmi::Coordinate(robot.getCoordinates().getX() + 1, robot.getCoordinates.getY()));
+                    else                        robot.setCoordinates(hmi::Coordinate(robot.getCoordinates().getX() - 1, robot.getCoordinates.getY()));
+                    for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
+                        if (randomAgent.getCoords() == robot.getCoordinates()) {
+                            randomAgent.setCondition(0);
+                            hmiObservation.getObservations().at(&randomAgent) = true;
+                        }
+                    }   
+                }
+            }
+            currentState.sampleMovement(1, targetAgents);
             hmiObservation.makeObservations();
         }
 

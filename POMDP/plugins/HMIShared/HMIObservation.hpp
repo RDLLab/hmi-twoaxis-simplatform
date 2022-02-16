@@ -20,8 +20,6 @@ public:
 
     HMIObservation(HMIState &currentState);
 
-    HMIObservation(HMIState &currentState, HMIRandomAgent* targetAgent);
-
     HMIState getUnderlyingState();
 
     std::unordered_map<HMIRandomAgent*, bool> getObservations();
