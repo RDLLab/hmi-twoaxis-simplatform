@@ -12,11 +12,16 @@ HMIState::HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, std
     VectorInt state(stateVec.begin(), stateVec.end());
 
     // Initialise robot coordinates and grid structure.
-    robotX_ = state[DEFAULT_X_INDEX];
-    robotY_ = state[DEFAULT_Y_INDEX];
     grid_ = grid;
 
-    for (size_t i = DEFAULT_RANDOM_AGENT_START; i != state.size(); i += RANDOM_AGENT_ELEMENTS) {
+    size_t numRobots = 2 * (state.size() - typesAndIDs.size());
+
+    for (size_t i = 0; i != numRobots; i += ROBOT_ELEMENTS) {
+        HMIRobot hmiRobot(state[i], state[i + 1]);
+        robots_.push_back(hmiRobot);
+    }
+
+    for (size_t i = numRobots; i != state.size(); i += RANDOM_AGENT_ELEMENTS) {
 
         // Store the x- and y-coordinates and condition of this random agent into variables.
         int x = state[i];
@@ -24,7 +29,7 @@ HMIState::HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, std
         int condition = state[i + 2];
 
         // Determine where this random agent sits among the order of all the random agents.
-        int randomAgentIndex = (i - DEFAULT_RANDOM_AGENT_START) / RANDOM_AGENT_ELEMENTS;
+        int randomAgentIndex = (i - numRobots) / RANDOM_AGENT_ELEMENTS;
 
         // Store the type and ID of this random agent into variables.
         std::pair<std::string, int> typeAndID = typesAndIDs[randomAgentIndex];
@@ -32,11 +37,11 @@ HMIState::HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, std
         int id = typeAndID.second;
 
         // Determine the transition matrix that corresponds to this random agent's type.
-        TransitionMatrix transitionMatrix = typesToMatrices.at(type);
+        TransitionMatrix tm = typesToMatrices.at(type);
 
         // Initialise the random agent with these values and append it to this state's
         // vector of random agents.
-        HMIRandomAgent randomAgent(x, y, type, id, condition, transitionMatrix);
+        HMIRandomAgent randomAgent(x, y, type, id, condition, tm);
         randomAgents_.push_back(randomAgent);
     }
 
@@ -49,13 +54,15 @@ HMIState::HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, Gri
     std::cout << "Running constructor of HMIState..." << std::endl;
     
     VectorInt state(stateVec.begin(), stateVec.end());
-    
-    // Initialise robot coordinates and grid structure.
-    robotX_ = state[DEFAULT_X_INDEX];
-    robotY_ = state[DEFAULT_Y_INDEX];
     grid_ = grid;
+    size_t numRobots = 2 * (state.size() - typesAndIDs.size());
 
-    for (size_t i = DEFAULT_RANDOM_AGENT_START; i != state.size(); i += RANDOM_AGENT_ELEMENTS) {
+    for (size_t i = 0; i != numRobots; i += ROBOT_ELEMENTS) {
+        HMIRobot hmiRobot(state[i], state[i + 1]);
+        robots_.push_back(hmiRobot);
+    }
+
+    for (size_t i = numRobots; i != state.size(); i += RANDOM_AGENT_ELEMENTS) {
 
         // Store the x- and y-coordinates and condition of this random agent into variables.
         int x = state[i];
@@ -63,7 +70,7 @@ HMIState::HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, Gri
         int condition = state[i + 2];
 
         // Determine where this random agent sits among the order of all the random agents.
-        int randomAgentIndex = (i - DEFAULT_RANDOM_AGENT_START) / RANDOM_AGENT_ELEMENTS;
+        int randomAgentIndex = (i - numRobots) / RANDOM_AGENT_ELEMENTS;
 
         // Store the type and ID of this random agent into variables.
         std::pair<std::string, int> typeAndID = typesAndIDs[randomAgentIndex];
@@ -84,12 +91,15 @@ HMIState::HMIState(VectorFloat stateVec, Grid grid) {
     std::cout << "Running constructor of HMIState..." << std::endl;
 
     VectorInt state(stateVec.begin(), stateVec.end());
-
-    robotX_ = state[DEFAULT_X_INDEX];
-    robotY_ = state[DEFAULT_Y_INDEX];
     grid_ = grid;
+    size_t numRobots = 2 * (state.size() - typesAndIDs.size());
 
-    for (size_t i = DEFAULT_RANDOM_AGENT_START; i != state.size(); i += RANDOM_AGENT_ELEMENTS) {
+    for (size_t i = 0; i != numRobots; i += ROBOT_ELEMENTS) {
+        HMIRobot hmiRobot(state[i], state[i + 1]);
+        robots_.push_back(hmiRobot);
+    }
+
+    for (size_t i = numRobots; i != state.size(); i += RANDOM_AGENT_ELEMENTS) {
 
         // Store the x- and y-coordinates and condition of this random agent into variables.
         int x = state[i];
@@ -103,24 +113,8 @@ HMIState::HMIState(VectorFloat stateVec, Grid grid) {
     std::cout << "Completed constructor of HMIState..." << std::endl;
 }
 
-Coordinate HMIState::getRobotCoordinates() {
-    return Coordinate(robotX_, robotY_);
-}
-
-int HMIState::getRobotX() {
-    return robotX_;
-}
-
-int HMIState::getRobotY() {
-    return robotY_;
-}
-
-void HMIState::setRobotX(int x) {
-    robotX_ = x;
-}
-
-void HMIState::setRobotY(int y) {
-    robotY_ = y;
+std::vector<HMIRobot> HMIState::getRobots() {
+    return robots_;
 }
 
 Grid HMIState::getGrid() {
@@ -131,12 +125,20 @@ std::vector<HMIRandomAgent> HMIState::getRandomAgents() {
     return randomAgents_;
 }
 
-void HMIState::sampleMovement(int numberOfTurns, HMIRandomAgent *targetAgent) {
+void HMIState::sampleMovement(int numberOfTurns, std::set<HMIRandomAgent*> targetAgents) {
     std::cout << "Running method sampleMovement() of HMIState..." << std::endl;
     for (int t = 0; t < numberOfTurns; ++t) {
         for (HMIRandomAgent randAg : getRandomAgents()) {
-            if (targetAgent == nullptr || targetAgent != &randAg)
+            if (targetAgents.empty())
                 randAg.sampleMovement(grid_);
+            else {
+                std::set<HMIRandomAgent*>::iterator randagIterator;
+                for (randagIterator = targetAgents.begin(); randagIterator != targetAgents.end(); ++randagIterator) {
+                    if (*randagIterator == &randAg) {
+                        randAg.sampleMovement(grid_);
+                    }
+                }
+            }
         }
     }
     std::cout << "Running method sampleMovement() of HMIState..." << std::endl;
@@ -146,30 +148,28 @@ VectorInt HMIState::toVector() {
     std::cout << "Running method toVector() of HMIState..." << std::endl;
 
     // Initialise the resulting vector of integers.
-    VectorInt res(DEFAULT_RANDOM_AGENT_START + (getRandomAgents().size() * RANDOM_AGENT_ELEMENTS));
+    int numRobots = ROBOT_ELEMENTS * robots_.size();
+    int numRandomAgents = RANDOM_AGENT_ELEMENTS * randomAgents_.size();
+    VectorInt res(numRobots + numRandomAgents);
 
-    // Put the x- and y-coordinates of the robot into the first two indices of this vector.
-    res[0] = robotX_;
-    res[1] = robotY_;
-
-    // Initialise the index variable that places information into the resulting vector.
-    size_t idx = DEFAULT_RANDOM_AGENT_START;
-
-    for (HMIRandomAgent randAg : getRandomAgents()) {
-
-        // Add the random agent's x- and y-coordinates, as well as its condition.
-        res[idx] = randAg.getX();
-        res[idx + 1] = randAg.getY();
-        res[idx + 2] = randAg.getCondition();
-
-        // Increase the index variable by the number of variable elements for a random agent.
-        idx += RANDOM_AGENT_ELEMENTS;
+    for (size_t i = 0; i != numRobots; i += ROBOT_ELEMENTS) {
+        res[i] = robots_[i / ROBOT_ELEMENTS].getCoordinates().getX();
+        res[i + 1] = robots_[i / ROBOT_ELEMENTS].getCoordinates().getY();
     }
+
+    for (size_t i = numRobots; i != numRobots + numRandomAgents; i += RANDOM_AGENT_ELEMENTS) {
+        int idx = (i - numRobots) / RANDOM_AGENT_ELEMENTS;
+        res[i] = randomAgents_[idx].getCoords().getX();
+        res[i + 1] = randomAgents_[idx].getCoords().getY();
+        res[i + 2] = randomAgents_[idx].getCondition();
+    }
+
     std::cout << "Completed method toVector() of HMIState..." << std::endl;
 
     // Return the resulting vector, filled with all of the necessary information.
     return res;
 }
+
 
 }
 }
