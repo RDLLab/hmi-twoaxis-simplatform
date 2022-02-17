@@ -86,33 +86,6 @@ HMIState::HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, Gri
     std::cout << "Completed constructor of HMIState..." << std::endl;
 }
 
-HMIState::HMIState(VectorFloat stateVec, Grid grid) {
-
-    std::cout << "Running constructor of HMIState..." << std::endl;
-
-    VectorInt state(stateVec.begin(), stateVec.end());
-    grid_ = grid;
-    size_t numRobots = 2 * (state.size() - typesAndIDs.size());
-
-    for (size_t i = 0; i != numRobots; i += ROBOT_ELEMENTS) {
-        HMIRobot hmiRobot(state[i], state[i + 1]);
-        robots_.push_back(hmiRobot);
-    }
-
-    for (size_t i = numRobots; i != state.size(); i += RANDOM_AGENT_ELEMENTS) {
-
-        // Store the x- and y-coordinates and condition of this random agent into variables.
-        int x = state[i];
-        int y = state[i + 1];
-        int condition = state[i + 2];
-
-        HMIRandomAgent randomAgent(x, y, condition);
-        randomAgents_.push_back(randomAgent);
-    }
-
-    std::cout << "Completed constructor of HMIState..." << std::endl;
-}
-
 std::vector<HMIRobot> HMIState::getRobots() {
     return robots_;
 }
@@ -123,6 +96,20 @@ Grid HMIState::getGrid() {
 
 std::vector<HMIRandomAgent> HMIState::getRandomAgents() {
     return randomAgents_;
+}
+
+std::set<HMIRandomAgent*> HMIState::getTargetAgents(VectorFloat& actionVec) {
+    std::set<HMIRandomAgent*> targetAgents;
+    for (size_t i = 0; i != actionVec.size(); i += 2) {
+        int actionX = actionVec[i];
+        int actionY = actionVec[i + 1];
+        for (HMIRandomAgent randomAgent : randomAgents_) {
+            if (randomAgent.getCoords().getX() == actionX && randomAgent.getCoords().getY() == actionY) {
+                targetAgents.insert(&randomAgent);
+            }
+        }
+    }
+    return targetAgents;
 }
 
 void HMIState::sampleMovement(int numberOfTurns, std::set<HMIRandomAgent*> targetAgents) {

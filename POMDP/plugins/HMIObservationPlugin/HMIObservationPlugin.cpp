@@ -71,52 +71,22 @@ public:
 
         // Determine what action will be made from the given data.
         VectorFloat actionVec = observationRequest->action->as<VectorAction>()->asVector();
-         std::set<hmi::HMIRandomAgent*> targetAgents;
-        for (size_t i = 0; i != actionVec.size(); i += 2) {
-            int actionX = actionVec[i];
-            int actionY = actionVec[i + 1];
-            for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
-                if (randomAgent.getCoords().getX() == actionX && randomAgent.getCoords().getY() == actionY) {
-                    targetAgents.insert(&randomAgent);
-                    randomAgent.setCondition(0);
-                    hmiObservation.getObservations().at(&randomAgent) = true;
-                }
-            }
-        }
+        std::set<hmi::HMIRandomAgent*> targetAgents = hmiObservation.getUnderlyingState().getTargetAgents(actionVec);
 
-        std::vector<std::pair<int, std::string>> shortestPaths(currentState.getRobots().size());
+        std::vector<std::string> shortestPaths(hmiState.getRobots().size());
         int maxShortestPath = -1;
-        for (size_t i = 0; i != currentState.getRobots().size(); ++i) {
-            hmi::HMIRobot robot = currentState.getRobots()[i];
+        for (size_t i = 0; i != hmiState.getRobots().size(); ++i) {
+            hmi::HMIRobot robot = hmiState.getRobots()[i];
             int robotX = robot.getCoordinates().getX();
             int robotY = robot.getCoordinates().getY();
             int actionX = (int) actionVec[2*i];
             int actionY = (int) actionVec[2*i + 1];
-            shortestPaths[i] = hmi::getShortestPath(grid_, robotX, robotY, actionX, actionY);
-            maxShortestPath = std::max(shortestPaths[i].first, maxShortestPath);
+            std::pair<int, std::string> path = hmi::getShortestPath(grid_, robotX, robotY, actionX, actionY);
+            shortestPaths[i] = path.second;
+            maxShortestPath = std::max(path.first, maxShortestPath);
         }
 
-        for (size_t i = 0; i != maxShortestPath; ++i) {
-            for (size_t j = 0; j != currentState.getRobots().size(); ++j) {
-                if (i < shortestPaths[j].size()) {
-                    hmi::HMIRobot robot = currentState.getRobots()[j];
-                    hmi::Coordinate robotCoords = robot.getCoordinates();
-                    std::string path = shortestPaths[j].second;
-                    if (path.at(i) == 'N')      robot.setCoordinates(hmi::Coordinate(robot.getCoordinates().getX(), robot.getCoordinates.getY() - 1));
-                    else if (path.at(i) == 'S') robot.setCoordinates(hmi::Coordinate(robot.getCoordinates().getX(), robot.getCoordinates.getY() + 1));
-                    else if (path.at(i) == 'E') robot.setCoordinates(hmi::Coordinate(robot.getCoordinates().getX() + 1, robot.getCoordinates.getY()));
-                    else                        robot.setCoordinates(hmi::Coordinate(robot.getCoordinates().getX() - 1, robot.getCoordinates.getY()));
-                    for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
-                        if (randomAgent.getCoords() == robot.getCoordinates()) {
-                            randomAgent.setCondition(0);
-                            hmiObservation.getObservations().at(&randomAgent) = true;
-                        }
-                    }   
-                }
-            }
-            currentState.sampleMovement(1, targetAgents);
-            hmiObservation.makeObservations();
-        }
+        hmiObservation.sampleMovement(maxShortestPath, shortestPaths, targetAgents);
 
         // Populate the resulting observation and return it.
         VectorInt outVector = hmiObservation.toVector();

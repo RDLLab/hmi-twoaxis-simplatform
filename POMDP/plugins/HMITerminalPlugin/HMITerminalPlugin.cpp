@@ -27,6 +27,10 @@ class HMITerminalPlugin: public TerminalPlugin {
             std::string gridPath
                 = static_cast<HMITerminalOptions*>(options_.get())->gridPath;
             grid_ = hmi::instantiateGrid(gridPath);
+
+            std::string randomAgentsPath
+                = static_cast<HMITerminalOptions*>(options_.get())->randomAgentsPath;
+            randomAgents_ = hmi::instantiateTypesAndIDs(randomAgentsPath);
             // std::cout << "Completed method load() in class HMITerminalPlugin...\n";
             return true;
         }
@@ -35,20 +39,24 @@ class HMITerminalPlugin: public TerminalPlugin {
             // std::cout << "Running method isValid() in class HMITerminalPlugin...\n";
             ValidityReportSharedPtr vr(new ValidityReport(propagationResult->nextState));
             VectorFloat stateVec = propagationResult->nextState->as<VectorState>()->asVector();
-            hmi::HMIState hmiState(stateVec, grid_);
+            hmi::HMIState hmiState(stateVec, randomAgents_, grid_);
             vr->isValid = true;
 
-            bool xOutOfGrid = hmiState.getRobotX() < 0 || hmiState.getRobotX() >= grid_.getWidth();
-            bool yOutOfGrid = hmiState.getRobotY() < 0 || hmiState.getRobotY() >= grid_.getHeight();
-            bool invalidCell = !grid_.getGrid()[hmiState.getRobotCoordinates().toPosition(grid_)];
-            if (xOutOfGrid || yOutOfGrid || invalidCell) {
-                vr->isValid = false;
+            for (hmi::HMIRobot robot : hmiState.getRobots()) {
+                bool xOutOfGrid = robot.getCoordinates().getX() < 0 || robot.getCoordinates().getX() >= grid_.getWidth();
+                bool yOutOfGrid = robot.getCoordinates().getY() < 0 || robot.getCoordinates().getY() >= grid_.getHeight();
+                bool invalidCell = !grid_.getGrid()[robot.getCoordinates().toPosition(grid_)];
+                if (xOutOfGrid || yOutOfGrid || invalidCell) {
+                    vr->isValid = false;
+                    break;
+                }
             }
-            else {
+            
+            if (vr->isValid) {
                 for (hmi::HMIRandomAgent randomAgent : hmiState.getRandomAgents()) {
-                    xOutOfGrid = randomAgent.getX() < 0 || randomAgent.getX() >= grid_.getWidth();
-                    yOutOfGrid = randomAgent.getY() < 0 || randomAgent.getY() >= grid_.getHeight();
-                    invalidCell = !grid_.getGrid()[randomAgent.getCoords().toPosition(grid_)];
+                    bool xOutOfGrid = randomAgent.getX() < 0 || randomAgent.getX() >= grid_.getWidth();
+                    bool yOutOfGrid = randomAgent.getY() < 0 || randomAgent.getY() >= grid_.getHeight();
+                    bool invalidCell = !grid_.getGrid()[randomAgent.getCoords().toPosition(grid_)];
                     if (xOutOfGrid || yOutOfGrid || invalidCell) {
                         vr->isValid = false;
                         break;
@@ -66,6 +74,7 @@ class HMITerminalPlugin: public TerminalPlugin {
 
     private:
         hmi::Grid grid_;
+        std::vector<hmi::TypeAndId> randomAgents_;
 
 };
 

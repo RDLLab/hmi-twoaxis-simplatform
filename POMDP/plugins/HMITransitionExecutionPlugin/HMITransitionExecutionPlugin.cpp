@@ -52,7 +52,7 @@ public:
             int xAction = (int) actionVec[2*i];
             int yAction = (int) actionVec[2*i + 1];
 
-            std::string cmd += std::to_string(xAction) + "," + std::to_string(yAction) ",";
+            cmd += std::to_string(xAction) + "," + std::to_string(yAction) + ",";
         }
 
         cmd = cmd.substr(0, cmd.size() - 1) + " > " + pipePathToGama_;

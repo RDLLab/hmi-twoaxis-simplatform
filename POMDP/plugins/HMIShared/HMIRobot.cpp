@@ -12,7 +12,7 @@ Coordinate HMIRobot::getCoordinates() {
 }
 
 void HMIRobot::setCoordinates(Coordinate coordinate) {
-    coordinates_(coordinate);
+    coordinates_ = Coordinate(coordinate.getX(), coordinate.getY());
 }
 
 }

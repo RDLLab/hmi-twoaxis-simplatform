@@ -72,7 +72,7 @@ void HMIRandomAgent::sampleMovement(const Grid &grid) {
     std::uniform_int_distribution<> moveDistribution(0, 1);
     bool willMove = moveDistribution(randEng);
 
-    if (willMove) {
+    if (condition_ == 0 && willMove) {
 
         // Create a vector storing all of the traversing neighbouring squares to
         // this random agent (diagonals allowed).

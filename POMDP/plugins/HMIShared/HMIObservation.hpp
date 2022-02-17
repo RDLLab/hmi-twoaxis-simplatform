@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <random>
 #include <algorithm>
+#include <set>
+#include <string>
 
 namespace oppt
 {
@@ -22,16 +24,20 @@ public:
 
     HMIState getUnderlyingState();
 
-    std::unordered_map<HMIRandomAgent*, bool> getObservations();
+    std::unordered_map<HMIRandomAgent*, int> getObservations();
 
     void makeObservations();
 
     VectorInt toVector();
 
+    VectorInt toStateVector();
+
+    void sampleMovement(int numTurns, std::vector<std::string> robotMoves, std::set<HMIRandomAgent*> targetAgents);
+
 private:
 
     HMIState *underlyingState_;
-    std::unordered_map<HMIRandomAgent*, bool> observations_;
+    std::unordered_map<HMIRandomAgent*, int> observations_;
     VectorInt originalConditions_;
     const double SEE_CONDITION_PROBABILITY = 0.8;
 

@@ -9,7 +9,7 @@ namespace hmi
 HMIObservation::HMIObservation(HMIState &currentState) {
     underlyingState_ = &currentState;
     for (HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
-        observations_.insert(std::make_pair(&randomAgent, false));
+        observations_.insert(std::make_pair(&randomAgent, -1));
         originalConditions_.push_back(randomAgent.getCondition());
     }
 }
@@ -18,7 +18,7 @@ HMIState HMIObservation::getUnderlyingState() {
     return *underlyingState_;
 }
 
-std::unordered_map<HMIRandomAgent*, bool> HMIObservation::getObservations() {
+std::unordered_map<HMIRandomAgent*, int> HMIObservation::getObservations() {
     return observations_;
 }
 
@@ -29,7 +29,7 @@ void HMIObservation::makeObservations() {
         // If the agent is calling for help or the robot can see its condition, we add
         // its condition being observed to the observation vector.
         if (testConditionProbability())
-            observations_.at(&randomAgent) = true;
+            observations_.at(&randomAgent) = randomAgent.getCondition();
     }
 }
 
@@ -37,11 +37,44 @@ VectorInt HMIObservation::toVector() {
     size_t numRandomAgents = getUnderlyingState().getRandomAgents().size();
     VectorInt res(numRandomAgents);
     for (size_t i = 0; i < numRandomAgents; ++i) {
-        HMIRandomAgent randomAgent = getUnderlyingState().getRandomAgents()[i];
-        if (observations_.at(&randomAgent)) res[i] = randomAgent.getCondition();
-        else                                res[i] = originalConditions_[i];
+        res[i] = observations_.at(&getUnderlyingState().getRandomAgents()[i]);
     }
     return res;
+}
+
+VectorInt HMIObservation::toStateVector() {
+    VectorInt res(underlyingState_->toVector());
+    size_t numRobots = underlyingState_->getRobots().size();
+    for (size_t i = numRobots + 2; i != res.size(); i += 3) {
+        HMIRandomAgent* randomAgent = &underlyingState_->getRandomAgents()[i];
+        res[i] = observations_.at(randomAgent) == -1 ? originalConditions_[(i - numRobots) / 3] : observations_.at(randomAgent);
+    }
+    return res;
+}
+
+void HMIObservation::sampleMovement(int numTurns, std::vector<std::string> robotMoves, std::set<HMIRandomAgent*> targetAgents) {
+    for (size_t i = 0; i != numTurns; ++i) {
+        for (size_t j = 0; j != underlyingState_->getRobots().size(); ++j) {
+            if (!robotMoves[j].empty()) {
+                hmi::HMIRobot robot = underlyingState_->getRobots()[j];
+                hmi::Coordinate robotCoords = robot.getCoordinates();
+                std::string path = robotMoves[j];
+                if (path.at(0) == 'N')      robot.setCoordinates(hmi::Coordinate(robotCoords.getX(), robotCoords.getY() - 1));
+                else if (path.at(0) == 'S') robot.setCoordinates(hmi::Coordinate(robotCoords.getX(), robotCoords.getY() + 1));
+                else if (path.at(0) == 'E') robot.setCoordinates(hmi::Coordinate(robotCoords.getX() + 1, robotCoords.getY()));
+                else                        robot.setCoordinates(hmi::Coordinate(robotCoords.getX() - 1, robotCoords.getY()));
+                robotMoves[j] = robotMoves[j].substr(1);
+                for (hmi::HMIRandomAgent randomAgent : underlyingState_->getRandomAgents()) {
+                    if (randomAgent.getCoords() == robotCoords) {
+                        randomAgent.setCondition(0);
+                        observations_.at(&randomAgent) = 0;
+                    }
+                }   
+            }
+        }
+        underlyingState_->sampleMovement(1, targetAgents);
+        makeObservations();
+    }
 }
 
 bool HMIObservation::canSeeCondition(Coordinate start, Coordinate dest) {

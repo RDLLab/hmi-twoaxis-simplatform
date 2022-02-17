@@ -64,14 +64,18 @@ global {
 	
 	/** Path to a named pipe to send files to this GAMA model. */
 	string path_to_gama <- base_directory + "pipes/pipeToGama";
+
+    string config_file_path <- base_directory + "cfg/HMISolver.cfg";
 	
-	/** A list of each random agent. This comprises of both their type (eg.
-	 *  "ELDERLY") and their ID (a numerical value), as a single string 
-	 *  separated by a comma.
-	 * 
-	 *  Note that the order of this list is the same order used by the solver,
-	 *  so make sure to keep both of these lists consistent! */
-	list<string> random_agents <- ["ELDERLY,0", "TODDLER,0"];
+	map<string, int> randag_map <- create_map(["ELDERLY", "TODDLER"], [1, 1]);
+	
+	list<string> random_agents;
+	
+	list<point> robot_locations <- [{2,2}];
+	
+	list<point> randag_locations <- [{0,0}, {4,4}];
+	
+	list<int> randag_conditions <- [0,0];
 	
 	/** A map mapping each random agent type to its corresponding condition 
 	 * transition matrix.
@@ -90,7 +94,7 @@ global {
 	 * - Row 2: P{s_t+1 = sad | s_t = happy}; and
 	 * - Row 3: P{s_t+1 = angry | s_t = happy}.
 	 * */
-	map<string, matrix<float>> matrices <- create_map(["ELDERLY", "TODDLER"], [
+	map<string, matrix<float>> matrices <- create_map(randag_map.keys, [
 		// Elderly state transition matrix
 		(matrix([[0.9, 0.0, 0.0, 0.5],
                 [0.1, 0.8, 0.0, 0.0],
@@ -104,7 +108,9 @@ global {
 	]);
 	
 	/** Number of conditions in the problem. */
-	int number_of_conditions <- 4;
+	int num_conditions <- 4;
+	
+	int num_robots;
 	
 	/** The base filepath for any images used in this simulation. */
 	string uri_base <- "../includes/";
@@ -116,13 +122,86 @@ global {
 		string cmd <- command("mkdir -p " + model_directory);
 		do refresh_pipes();
 		do initialise_grid();
-		list<int> init_robot_state <- state_from_string("initialRobotState");
-		list<int> init_randag_state <- state_from_string("initialRandomAgentState");
-		do initialise_random_agents(init_randag_state);
-		do initialise_robots(init_robot_state, init_randag_state);
+		write("Completed init() method of species global...");
+	}
+	
+	reflex init_agents when: world.cycle = 0 {
+		random_agents <- generate_randag_strings();
+		string random_agent_string <- initialise_random_agents();
+		string robot_string <- initialise_robots();
+		do edit_config_file(robot_string, random_agent_string);
 		do send_transition_matrices();
 		do send_grid();
-		write("Completed init() method of species global...");
+	}
+	
+	list<string> generate_randag_strings {
+		list<string> res <- [];
+		loop r over: randag_map.keys {
+			loop i from: 0 to: (randag_map at r) - 1 {
+				res <- res + (r + "," + string(i));
+			}
+		}
+		return res;
+	}
+	
+	action edit_config_file(string robot_state, string random_agent_state) {
+		string new_cfg_file <- edit_initial_state(robot_state, random_agent_state);
+		list<string> facet_strings <- [get_state_string(), get_action_string(), get_obs_string()];
+		list<string> facets <- ["[state]", "[action]", "[observation]"];
+		map<string, string> facet_to_data <- create_map(facets, facet_strings);
+		string data <- "";
+		loop k over: facet_to_data.keys {
+			data <- data + k + "\n\n" + facet_to_data at k;
+		}
+		int end <- new_cfg_file index_of "[state]";
+		int start <- new_cfg_file index_of "[changes]";
+		new_cfg_file <- copy_between(new_cfg_file, 0, end) + data + copy_between(new_cfg_file, start, length(new_cfg_file));
+		string write_to <- command("echo '" + new_cfg_file + "' > " + config_file_path);
+	}
+	
+	string edit_initial_state(string robot_state, string random_agent_state) {
+		string cfg_file <- command("cat < " + config_file_path);
+		write(cfg_file);
+		int end <- cfg_file index_of "initialRobotState";
+		int start <- (cfg_file index_of "initialRandomAgentState") + length("initialRandomAgentState =");
+		string new_cfg_file <- copy_between(cfg_file, 0, end) + robot_state + "\n" + random_agent_state + copy_between(cfg_file, start, length(cfg_file));
+		return new_cfg_file;
+	}
+	
+	string get_state_string {
+		int dimensions <- 2 * length(helper_robot) + 3 * length(random_agent);
+		string add_dim <- "additionalDimensions = " + string(dimensions);
+		string limits <- "additionalDimensionLimits = [";
+		loop times: length(helper_robot) {
+			limits <- limits + "[0, " + string(grid_width - 1) + "], ";
+			limits <- limits + "[0, " + string(grid_height - 1) + "], ";
+		}
+		limits <- copy_between(limits, 0, length(limits) - 2) + "]";
+		return add_dim + "\n\n" + limits + "\n\n";
+	}
+	
+	string get_action_string {
+		int dimensions <- 2 * length(helper_robot);
+		string add_dim <- "additionalDimensions = " + string(dimensions);
+		string limits <- "additionalDimensionLimits = [";
+		loop times: length(helper_robot) {
+			limits <- limits + "[0, " + string(grid_width - 1) + "], ";
+			limits <- limits + "[0, " + string(grid_height - 1) + "], ";
+		}
+		limits <- copy_between(limits, 0, length(limits) - 2) + "]";
+		return add_dim + "\n\n" + limits + "\n\n";
+	}
+	
+	string get_obs_string {
+		int dimensions <- length(random_agent);
+		string add_dim <- "additionalDimensions = " + string(dimensions);
+		string limits <- "additionalDimensionLimits = [";
+		loop times: length(random_agent) {
+			limits <- limits + "[0, " + string(num_conditions - 1) + "], ";
+			limits <- limits + "[0, " + string(num_conditions - 1) + "], ";
+		}
+		limits <- copy_between(limits, 0, length(limits) - 2) + "]";
+		return add_dim + "\n\n" + limits + "\n\n";
 	}
 	
 	/**
@@ -175,17 +254,25 @@ global {
 	 * @param init_randag_state the initial random agent state of the problem,
 	 *                          as specified by the HMISolver config file
 	 */
-	action initialise_random_agents(list<int> init_randag_state) {
+	string initialise_random_agents {
 		int idx <- 0;
 		string randag_str <- "";
-		loop r over: random_agents {
-			point start_point <- point_from_state(init_randag_state, idx);
-			int start_condition <- init_randag_state at (idx + 2);
-			do create_random_agent(r, start_point, start_condition);
-			randag_str <- randag_str + r + "\n";
-			idx <- idx + 3;
+		string init_state_string <- "initialRandomAgentState = [";
+		loop i from: 0 to: length(random_agents) - 1{
+			point start_point <- randag_locations at i;
+			int start_condition <- randag_conditions at i;
+			do create_random_agent(random_agents at i, start_point, start_condition);
+			randag_str <- randag_str + (random_agents at i) + "\n";
+			init_state_string <- init_state_string + string(start_point.x) + ", " + string(start_point.y);
+			if (i < length(random_agents - 1)) {
+				init_state_string <- init_state_string + ", ";
+			}
+			else {
+				init_state_string <- init_state_string + "]";
+			}
 		}
 		string cmd <- send_to_pipe(randag_str, randag_path);
+		return init_state_string;
 	}
 	
 	/**
@@ -196,13 +283,13 @@ global {
 	 * @param init_randag_state the initial random agent state of the problem,
 	 *                          as specified by the HMISolver config file
 	 */
-    action initialise_robots(list<int> init_robot_state, list<int> init_randag_state) {
-		int idx <- 0;
-		loop times: (length(init_robot_state) / 2) {
-			point start_point <- point_from_state(init_robot_state, idx);
-			do create_robot(start_point, init_randag_state);
-			idx <- idx + 2;
-		}
+    string initialise_robots {
+    	string init_state_string <- "initialRobotState = [";
+    	loop l over: robot_locations {
+    		do create_robot(l);
+    		init_state_string <- init_state_string + string(l.x) + ", " + string(l.y) + ", ";
+    	}
+    	return copy_between(init_state_string, 0, length(init_state_string) - 2) + "]";
 	}
 	
 	/**
@@ -222,7 +309,7 @@ global {
 	 * problem over to the solver, for its planning purposes.
 	 */
 	action send_transition_matrices {
-		string matrices_data <- string(number_of_conditions) + "\n";
+		string matrices_data <- string(num_conditions) + "\n";
 		loop k over: matrices.keys {
 			matrices_data <- matrices_data + k + ",";
 			matrix<float> current_matrix <- matrices at k;
@@ -239,8 +326,8 @@ global {
 	 */
 	string matrix_to_string(matrix<float> mat) {
 		string res <- "";
-		loop col from: 0 to: number_of_conditions - 1 {
-			loop row from: 0 to: number_of_conditions - 1 {
+		loop col from: 0 to: num_conditions - 1 {
+			loop row from: 0 to: num_conditions - 1 {
 				res <- res + string(mat at {row, col}) + ",";
 			}
 		}
@@ -265,12 +352,12 @@ global {
 	 *                                   in the problem, useful for formulating
 	 *                                   a belief
 	 */
-	action create_robot(point start_point, list<int> initial_random_agent_state) {
+	action create_robot(point start_point) {
 		write("Running create_robot() action of species global...");
 		create helper_robot {
 			do set_grid_cell(start_point);
 		    location <- my_cell.location;
-		    do set_initial_state(initial_random_agent_state);
+		    do set_initial_state();
 		}
 		write("Completed create_robot() action of species global...");
 	}
@@ -377,7 +464,7 @@ species random_agent {
 	action set_type_and_id(string randag_details) {
 		list<string> type_and_id <- randag_details split_with ",";
 		type <- type_and_id at 0;
-		id <- int(type_and_id at 1);
+		id <- 0;
 		name <- randag_details;
 	}
 	
@@ -499,14 +586,10 @@ species helper_robot {
 	 * @param initial_randag_state the initial state of all of the random
 	 *                             agents in this problem
 	 */
-	action set_initial_state(list<int> initial_randag_state) {
-		int idx <- 0;
-		loop r over: random_agents {
-			int randag_x <- initial_randag_state at idx;
-			int randag_y <- initial_randag_state at (idx + 1);
-		    put {randag_x, randag_y} key: r in: randag_locations;
-		    put initial_randag_state at (idx + 2) key: r in: randag_conditions;
-		    idx <- idx + 3;
+	action set_initial_state {
+		loop i from: 0 to: length(random_agents) - 1 {
+			put (world.randag_locations at i) key: (random_agents at i) in: randag_locations;
+			put (world.randag_conditions at i) key: (random_agents at i) in: randag_conditions;
 		}
 	}
 	
@@ -766,5 +849,6 @@ experiment out type: gui {
 			species random_agent aspect: sprite;
 		}
 	}
+	parameter "Number of robots" var: num_robots init: 1;
+	parameter "Type and number of random agents" var: randag_map;
 }
-

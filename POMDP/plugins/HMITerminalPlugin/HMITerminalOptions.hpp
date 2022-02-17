@@ -14,6 +14,8 @@ public:
     /** @brief The filepath to load the problem's grid environment. */
     std::string gridPath = BASE_PATH + "models/HMIModel/HMIGrid.txt";
 
+    std::string randomAgentsPath = BASE_PATH + "models/HMIModel/HMIRandomAgents.txt";
+
     static std::unique_ptr<options::OptionParser> makeParser() {
         // std::cout << "Running method makeParser() in class HMITerminalOptions...\n";
         std::unique_ptr<options::OptionParser> parser =
@@ -28,6 +30,9 @@ public:
         parser->addOption<std::string>("terminalPluginOptions",
                                        "gridPath",
                                        &HMITerminalOptions::gridPath);
+        parser->addOption<std::string>("terminalPluginOptions",
+                                       "randomAgentsPath",
+                                       &HMITerminalOptions::randomAgentsPath);
         // std::cout << "Completed method addHMITerminalOptions() in class HMITerminalOptions...\n";
     }
 

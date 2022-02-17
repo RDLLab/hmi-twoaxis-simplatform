@@ -49,8 +49,8 @@ public:
             = heuristicInfo->currentState->as<VectorState>()->asVector();
         hmi::HMIState hmiState(stateVec, randomAgents_, transitionMatrices_, grid_);
         hmi::HMIObservation hmiObservation(hmiState);
-        FloatType currentDiscount = std::pow(heuristicInfo->discountFactor, heuristicInfo->currentStep);        
-        FloatType val = 0;
+        FloatType currentDiscount = 1.0;     
+        FloatType val = 0.0;
 
         // Collect all the dependent agents that need help
         std::set<hmi::HMIRandomAgent*> unhappyRandomAgents;
@@ -58,69 +58,35 @@ public:
             if (randomAgent.getCondition() > 0) {
                 unhappyRandomAgents.insert(&randomAgent);
             }
+            else {
+                val += hmi::BASE_REWARD;
+            }
         }
 
         // Visit them from closest first
-        hmi::Coordinate robotCoords = hmiState.getRobotCoordinates();
         while (!unhappyRandomAgents.empty()) {
             std::set<hmi::HMIRandomAgent*>::iterator unhappyRandomAgentsIterator = unhappyRandomAgents.begin();
-            int robX = hmiState.getRobotX();
-            int robY = hmiState.getRobotY();
             int shortestDistance = -1;
-            std::string shortestPath = "";
-            hmi::HMIRandomAgent *closestRandomAgent = *unhappyRandomAgentsIterator;
+            hmi::HMIRandomAgent* closestRandomAgent = *unhappyRandomAgentsIterator;
+            hmi::HMIRobot* closestRobot = &hmiState.getRobots()[0];
             for (; unhappyRandomAgentsIterator != unhappyRandomAgents.end(); ++unhappyRandomAgentsIterator) {
                 int randAgX = (* unhappyRandomAgentsIterator)->getX();
                 int randAgY = (* unhappyRandomAgentsIterator)->getY();
-                std::pair<int, std::string> path = hmi::getShortestPath(grid_, robX, robY, randAgX, randAgY);
-                if (path.first < shortestDistance || shortestDistance < 0) {
-                    closestRandomAgent = *unhappyRandomAgentsIterator;
-                    shortestDistance = path.first;
-                    shortestPath = path.second;
+                for (hmi::HMIRobot robot : hmiState.getRobots()) {
+                    int robX = robot.getCoordinates().getX();
+                    int robY = robot.getCoordinates().getY();
+                    std::pair<int, std::string> path = hmi::getShortestPath(grid_, robX, robY, randAgX, randAgY);
+                    if (path.first < shortestDistance || shortestDistance < 0) {
+                        closestRandomAgent = *unhappyRandomAgentsIterator;
+                        closestRobot = &robot;
+                        shortestDistance = path.first;
+                    }
                 }
             }
             currentDiscount *= std::pow(heuristicInfo->discountFactor, shortestDistance);
-            for (int i = 0; i < shortestDistance; ++i) {
-                if (shortestPath.at(i) == 'N')      hmiState.setRobotY(hmiState.getRobotY() - 1);
-                else if (shortestPath.at(i) == 'S') hmiState.setRobotY(hmiState.getRobotY() + 1);
-                else if (shortestPath.at(i) == 'E') hmiState.setRobotX(hmiState.getRobotX() + 1);
-                else                                hmiState.setRobotX(hmiState.getRobotX() - 1);
-                for (hmi::HMIRandomAgent randAg : hmiState.getRandomAgents()) {
-                    if (closestRandomAgent->getType() != randAg.getType() && closestRandomAgent->getID() != randAg.getID()) {
-                        randAg.sampleMovement(grid_);
-                    }
-                }
-                hmiObservation.makeObservations();
-                VectorInt obsVector = hmiObservation.toVector();
-                for (size_t j = 0; j != hmiState.getRandomAgents().size(); ++j) {
-                    if (obsVector[j] > 0) {
-                        unhappyRandomAgents.insert(&hmiState.getRandomAgents()[j]);
-                    }
-                }
-            }
+            val += hmi::BASE_REWARD * currentDiscount;
+            closestRobot->setCoordinates(closestRandomAgent->getCoords());
             unhappyRandomAgents.erase(closestRandomAgent);
-
-            int numHappy = 0;
-            bool allHappy = true;
-
-            for (hmi::HMIRandomAgent randAg : hmiState.getRandomAgents()) {
-                if (randAg.getCondition() == 0) ++numHappy;
-                else                            allHappy = false;
-            }
-
-            if (allHappy) {
-                val += hmi::MAX_REWARD;
-            }
-            else {
-                for (hmi::HMIRandomAgent randAg : hmiState.getRandomAgents()) {
-                    if (randAg.getCondition() != 0) {
-                        val += numHappy * hmi::BASE_REWARD / std::max(2, hmi::getShortestPath(grid_, hmiState.getRobotX(), hmiState.getRobotY(), randAg.getX(), randAg.getY()).first);
-                    }
-                    else {
-                        val += numHappy * hmi::BASE_REWARD;
-                    }
-                }
-            }
         }
         // std::cout << "Completed method getHeuristicValue() in class HMIHeuristicPlugin...\n";
         return val;

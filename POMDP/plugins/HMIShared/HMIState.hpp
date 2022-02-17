@@ -59,6 +59,8 @@ public:
     Grid getGrid();
 
     std::vector<HMIRandomAgent> getRandomAgents();
+
+    std::set<HMIRandomAgent*> getTargetAgents(VectorFloat& actionVec);
     
     /**
      * Samples movement for every random agent for a given number of turns.

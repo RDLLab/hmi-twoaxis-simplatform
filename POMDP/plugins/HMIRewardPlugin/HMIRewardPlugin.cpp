@@ -38,7 +38,6 @@ public:
         std::cout << "Running method getReward() in class HMIRewardPlugin...\n";
 
         // Extract data from propagated state.
-        VectorFloat previousStateVector = propagationResult->previousState->as<VectorState>()->asVector();
         VectorFloat currentStateVector = propagationResult->nextState->as<VectorState>()->asVector();
         VectorFloat actionVec = propagationResult->action->as<VectorAction>()->asVector();
 
@@ -54,39 +53,8 @@ public:
             if (invalidCell) return hmi::MIN_REWARD;
         }
 
-        std::cout << "Setting happiness variables..." << std::endl;
-        int numHappy = 0;
-        bool allHappy = true;
-        VectorInt distances(currentState.getRandomAgents().size());
-
-        std::cout << "Checking happiness of each random agent..." << std::endl;
-        for (size_t i = 0; i != currentState.getRandomAgents().size(); ++i) {
-            hmi::HMIRandomAgent randomAgent = currentState.getRandomAgents()[i];
-            if (randomAgent.getCondition() == 0) ++numHappy;
-            else {
-                allHappy = false;
-                int randomX = randomAgent.getCoords().getX();
-                int randomY = randomAgent.getCoords().getY();
-                distances[i] = std::max(2, hmi::getShortestPath(grid_, actionVec[0], actionVec[1], randomX, randomY).first);
-                for (size_t j = 2; j != actionVec.size(); j += 2) {
-                    int dist = std::max(2, hmi::getShortestPath(grid_, actionVec[j], actionVec[j+1], randomX, randomY).first);
-                    distances[i] = std::min(distances[i], dist);
-                }
-            }
-        }
-
-        if (allHappy) {
-            std::cout << "Completed method getReward() in class HMIRewardPlugin...\n";
-            return hmi::MAX_REWARD;
-        }
-
-        for (size_t i = 0; i != currentState.getRandomAgents().size(); ++i) {
-            if (currentState.getRandomAgents()[i].getCondition() != 0)  {
-                reward += numHappy * hmi::BASE_REWARD / distances[i];
-            }
-            else {
-                reward += numHappy * hmi::BASE_REWARD;
-            }
+        for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
+            reward += randomAgent.getCondition() == 0 ? hmi::BASE_REWARD : 0.0;
         }
         
         std::cout << "Completed method getReward() in class HMIRewardPlugin...\n";
@@ -95,7 +63,7 @@ public:
 
     virtual std::pair<FloatType, FloatType> getMinMaxReward() const override {
         std::cout << "Running and completing method getMinMaxReward() in class HMIRewardPlugin...\n";
-        return std::make_pair(hmi::MIN_REWARD, hmi::MAX_REWARD);
+        return std::make_pair(hmi::MIN_REWARD, randomAgents_.size() * hmi::BASE_REWARD);
     }
 
 
