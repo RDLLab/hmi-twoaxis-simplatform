@@ -17,10 +17,7 @@ model HMIGamaInterface
 global {
 	
 	/** Width of the grid. */
-	int grid_width <- 5;
-	
-	/** Height of the grid. */
-	int grid_height <- 5;
+	int grid_size <- 5;
 	
 	/** Sprite size. */
 	float size <- 10.0;
@@ -34,7 +31,7 @@ global {
 	                      "_____";
 	                      
 	/** Root directory of OPPT. */
-	string base_directory <- "../../oppt_install/oppt/";
+	string base_directory <- copy_between(command("pwd"), 0, length(command("pwd")) - 1) + "/" + "../../oppt_install/oppt/";
 	
 	/** Directory to all information related to the model. */
 	string model_directory <- base_directory + "models/HMIModel/";
@@ -66,14 +63,18 @@ global {
 	string path_to_gama <- base_directory + "pipes/pipeToGama";
 
     string config_file_path <- base_directory + "cfg/HMISolver.cfg";
+    
+    list<string> randag_types <- ["ELDERLY", "TODDLER"];
 	
-	map<string, int> randag_map <- create_map(["ELDERLY", "TODDLER"], [1, 1]);
+	map<string, int> randag_map <- create_map(randag_types, [1, 1]);
 	
 	list<string> random_agents;
 	
 	list<point> robot_locations <- [{2,2}];
 	
-	list<point> randag_locations <- [{0,0}, {4,4}];
+	map<string, list<point>> randag_locations <- create_map(randag_types, [[{0,0}], [{4,4}]]);
+	
+	//list<point> randag_locations <- [{0,0}, {4,4}];
 	
 	list<int> randag_conditions <- [0,0];
 	
@@ -119,13 +120,19 @@ global {
 	 * Initialise all global facets of the model.
 	 */
 	init {
+		write model_directory;
 		string cmd <- command("mkdir -p " + model_directory);
 		do refresh_pipes();
 		do initialise_grid();
+		file cfg_file <- file(config_file_path);
+		loop e over: cfg_file {
+			write e;
+		}
 		write("Completed init() method of species global...");
 	}
 	
 	reflex init_agents when: world.cycle = 0 {
+		write "Running method init_agents()";
 		random_agents <- generate_randag_strings();
 		string random_agent_string <- initialise_random_agents();
 		string robot_string <- initialise_robots();
@@ -135,6 +142,7 @@ global {
 	}
 	
 	list<string> generate_randag_strings {
+		write "Running method generate_randag_strings()";
 		list<string> res <- [];
 		loop r over: randag_map.keys {
 			loop i from: 0 to: (randag_map at r) - 1 {
@@ -145,59 +153,72 @@ global {
 	}
 	
 	action edit_config_file(string robot_state, string random_agent_state) {
-		string new_cfg_file <- edit_initial_state(robot_state, random_agent_state);
-		list<string> facet_strings <- [get_state_string(), get_action_string(), get_obs_string()];
+		write "Running method edit_config_file()";
+		file cfg_file <- file(config_file_path);
+		map<string, string> to_replace;
+		put robot_state key: "initialRobotState" in: to_replace;
+		put random_agent_state key: "initialRandomAgentState" in: to_replace;
+		put get_state_string() key: "[state]" in: to_replace;
+		put get_action_string() key: "[action]" in: to_replace;
+		put get_obs_string() key: "[observation]" in: to_replace;
 		list<string> facets <- ["[state]", "[action]", "[observation]"];
-		map<string, string> facet_to_data <- create_map(facets, facet_strings);
-		string data <- "";
-		loop k over: facet_to_data.keys {
-			data <- data + k + "\n\n" + facet_to_data at k;
+		put string(grid_size) key: "numInputStepsActions" in: to_replace;
+		put string(num_conditions) key: "numInputStepsObservations" in: to_replace;
+		loop i from: 0 to: length(cfg_file) - 1 {
+			loop k over: to_replace.keys {
+				if ((cfg_file at i) contains k) {
+					if (facets contains k) {
+						loop j from: 5 to: 2 step: -1 {
+							remove i + j from: cfg_file;
+						}
+						put (to_replace at k) in: cfg_file at: i + 1;
+					}
+					else {
+						put (k + " = " + (to_replace at k)) in: cfg_file at: i;
+					}
+					remove k from: to_replace;
+				}
+			}
 		}
-		int end <- new_cfg_file index_of "[state]";
-		int start <- new_cfg_file index_of "[changes]";
-		new_cfg_file <- copy_between(new_cfg_file, 0, end) + data + copy_between(new_cfg_file, start, length(new_cfg_file));
-		string write_to <- command("echo '" + new_cfg_file + "' > " + config_file_path);
-	}
-	
-	string edit_initial_state(string robot_state, string random_agent_state) {
-		string cfg_file <- command("cat < " + config_file_path);
-		write(cfg_file);
-		int end <- cfg_file index_of "initialRobotState";
-		int start <- (cfg_file index_of "initialRandomAgentState") + length("initialRandomAgentState =");
-		string new_cfg_file <- copy_between(cfg_file, 0, end) + robot_state + "\n" + random_agent_state + copy_between(cfg_file, start, length(cfg_file));
-		return new_cfg_file;
 	}
 	
 	string get_state_string {
+		write "Running method get_state_string()";
 		int dimensions <- 2 * length(helper_robot) + 3 * length(random_agent);
 		string add_dim <- "additionalDimensions = " + string(dimensions);
 		string limits <- "additionalDimensionLimits = [";
 		loop times: length(helper_robot) {
-			limits <- limits + "[0, " + string(grid_width - 1) + "], ";
-			limits <- limits + "[0, " + string(grid_height - 1) + "], ";
+			limits <- limits + "[0, " + string(grid_size - 1) + "], ";
+			limits <- limits + "[0, " + string(grid_size - 1) + "], ";
+		}
+		loop times: length(random_agent) {
+			limits <- limits + "[0, " + string(grid_size - 1) + "], ";
+			limits <- limits + "[0, " + string(grid_size - 1) + "], ";
+			limits <- limits + "[0, " + string(num_conditions - 1) + "], ";
 		}
 		limits <- copy_between(limits, 0, length(limits) - 2) + "]";
 		return add_dim + "\n\n" + limits + "\n\n";
 	}
 	
 	string get_action_string {
+		write "Running method get_action_string()";
 		int dimensions <- 2 * length(helper_robot);
 		string add_dim <- "additionalDimensions = " + string(dimensions);
 		string limits <- "additionalDimensionLimits = [";
 		loop times: length(helper_robot) {
-			limits <- limits + "[0, " + string(grid_width - 1) + "], ";
-			limits <- limits + "[0, " + string(grid_height - 1) + "], ";
+			limits <- limits + "[0, " + string(grid_size - 1) + "], ";
+			limits <- limits + "[0, " + string(grid_size - 1) + "], ";
 		}
 		limits <- copy_between(limits, 0, length(limits) - 2) + "]";
 		return add_dim + "\n\n" + limits + "\n\n";
 	}
 	
 	string get_obs_string {
+		write "Running method get_obs_string()";
 		int dimensions <- length(random_agent);
 		string add_dim <- "additionalDimensions = " + string(dimensions);
 		string limits <- "additionalDimensionLimits = [";
 		loop times: length(random_agent) {
-			limits <- limits + "[0, " + string(num_conditions - 1) + "], ";
 			limits <- limits + "[0, " + string(num_conditions - 1) + "], ";
 		}
 		limits <- copy_between(limits, 0, length(limits) - 2) + "]";
@@ -209,6 +230,7 @@ global {
 	 * between this program and the solver.
 	 */
 	action refresh_pipes {
+		write "Running method refresh_pipes()";
 		string return_dir <- command("pwd");
 		string cmd <- command("cd ../../oppt_hmi_scripts && ./setPipes.sh");
 		cmd <- command("cd " + return_dir);
@@ -220,32 +242,12 @@ global {
 	 * non-traversable cells, eg. walls).
 	 */
     action initialise_grid {
+    	write "Running method initialise_grid()";
 		ask grid_cell {
-			string cell_id <- grid_layout at ((grid_y * grid_width) + grid_x);
+			string cell_id <- grid_layout at ((grid_y * grid_size) + grid_x);
 			traversable <- cell_id = "_";
 			color <- traversable ? #white : #black;
 		}
-	}
-	
-	/**
-	 * Finds an initial state in the HMISolver config file, and converts it
-	 * into a more GAMA-appropriate data structure.
-	 * 
-	 * @param state_type the type of state processed. This state should exist
-	 *                   under `initialBeliefOptions` in `HMISolver.cfg`.
-	 * 
-	 * @return the corresponding state encoded in the HMISolver config file, in
-	 *         list form instead of string form.
-	 */
-	list<int> state_from_string(string state_type) {
-		string grep_state <- "grep \"" + state_type + "\" ";
-		string config_file <- base_directory + "cfg/HMISolver.cfg";
-		string state_string <- command(grep_state + config_file);
-		int start <- length(state_type + " = [");
-		int end <- length(state_string) - 2;
-		state_string <- copy_between(state_string, start, end);
-		list<int> state <- state_string split_with ", ";
-		return state;
 	}
 	
 	/**
@@ -255,16 +257,20 @@ global {
 	 *                          as specified by the HMISolver config file
 	 */
 	string initialise_random_agents {
+		write "Running method initialise_random_agents()";
 		int idx <- 0;
 		string randag_str <- "";
 		string init_state_string <- "initialRandomAgentState = [";
-		loop i from: 0 to: length(random_agents) - 1{
-			point start_point <- randag_locations at i;
+		loop i from: 0 to: length(random_agents) - 1 {
+			list<string> randag_details <- (random_agents at i) split_with ",";
+			string type <- randag_details at 0;
+			int id <- int(randag_details at 1);
+			point start_point <- (randag_locations at type) at id;
 			int start_condition <- randag_conditions at i;
 			do create_random_agent(random_agents at i, start_point, start_condition);
 			randag_str <- randag_str + (random_agents at i) + "\n";
-			init_state_string <- init_state_string + string(start_point.x) + ", " + string(start_point.y);
-			if (i < length(random_agents - 1)) {
+			init_state_string <- init_state_string + string(start_point.x) + ", " + string(start_point.y) + ", " + string(start_condition);
+			if (i < (length(random_agents) - 1)) {
 				init_state_string <- init_state_string + ", ";
 			}
 			else {
@@ -284,6 +290,7 @@ global {
 	 *                          as specified by the HMISolver config file
 	 */
     string initialise_robots {
+    	write "Running method initialise_robots()";
     	string init_state_string <- "initialRobotState = [";
     	loop l over: robot_locations {
     		do create_robot(l);
@@ -339,7 +346,7 @@ global {
 	 * its planning and execution purposes.
 	 */
 	action send_grid {
-		string grid_data <- string(grid_width) + "," + string(grid_height) +
+		string grid_data <- string(grid_size) + "," + string(grid_size) +
 		    "," + grid_layout;
 		string cmd <- send_to_pipe(grid_data, grid_path);
 	}
@@ -512,7 +519,7 @@ species random_agent {
     	list<point> offsets <- [{-1, -1}, {1, -1}, {-1, 1}, {1, 1}];
     	loop i from: 0 to: length(my_cell.dependents_in_cell) - 1 {
     		if ((my_cell.dependents_in_cell at i) = self) {
-    			point multiplier <- {grid_width, grid_height} / 4.0;
+    			point multiplier <- {grid_size, grid_size} / 4.0;
     			location <- location + (offsets at i) * multiplier;
     		}
     	}
@@ -569,8 +576,8 @@ species helper_robot {
 	 * @param start_point the starting point of this robot
 	 */
 	action set_grid_cell(point start_point) {
-		bool x_out <- start_point.x < 0 or start_point.x >= grid_width;
-		bool y_out <- start_point.y < 0 or start_point.y >= grid_height;
+		bool x_out <- start_point.x < 0 or start_point.x >= grid_size;
+		bool y_out <- start_point.y < 0 or start_point.y >= grid_size;
 		if (x_out or y_out) {
 			my_cell <- any(grid_cell where each.traversable);
 		}
@@ -588,7 +595,10 @@ species helper_robot {
 	 */
 	action set_initial_state {
 		loop i from: 0 to: length(random_agents) - 1 {
-			put (world.randag_locations at i) key: (random_agents at i) in: randag_locations;
+			list<string> randag_details <- (random_agents at i) split_with ",";
+			string type <- randag_details at 0;
+			int id <- int(randag_details at 1);
+			put ((world.randag_locations at type) at id) key: (random_agents at i) in: randag_locations;
 			put (world.randag_conditions at i) key: (random_agents at i) in: randag_conditions;
 		}
 	}
@@ -793,7 +803,7 @@ species helper_robot {
     	my_size <- size / reduction_factor;
     	list<point> offsets <- [{-1, -1}, {1, -1}, {-1, 1}, {1, 1}];
     	int idx <- my_cell.robots_in_cell index_of self;
-    	point multiplier <- {grid_width, grid_height} / 4.0;
+    	point multiplier <- {grid_size, grid_size} / 4.0;
     	location <- location + ((offsets at (idx + num_randags)) * multiplier);
     }
 	 
@@ -811,7 +821,7 @@ species helper_robot {
 	
 }
 
-grid grid_cell width: grid_width height: grid_height neighbors: 4 {
+grid grid_cell width: grid_size height: grid_size neighbors: 4 {
 	bool traversable;
 	list<helper_robot> robots_in_cell -> {helper_robot inside self};
 	list<random_agent> dependents_in_cell -> {random_agent inside self};
@@ -828,11 +838,11 @@ grid grid_cell width: grid_width height: grid_height neighbors: 4 {
 	grid_cell find_neighboring_cell(int x_diff, int y_diff) {
 		write("Running find_neighboring_cell() function of species grid_cell...");
 		point new_point <- {self.grid_x + x_diff, self.grid_y + y_diff};
-		bool x_out <- new_point.x < 0 or new_point.x >= grid_width;
-		bool y_out <- new_point.y < 0 or new_point.y >= grid_height;
+		bool x_out <- new_point.x < 0 or new_point.x >= grid_size;
+		bool y_out <- new_point.y < 0 or new_point.y >= grid_size;
 		if (x_out or y_out) {return self;}
 		if ((grid_cell grid_at new_point).traversable) {
-			write("Completed find_neighboring_cell() function of species grid_cell...");
+			write("Completed find_neighboringin_cell() function of species grid_cell...");
 			return grid_cell grid_at new_point;
 		}
 		write("Completed find_neighboring_cell() function of species grid_cell...");
@@ -851,4 +861,5 @@ experiment out type: gui {
 	}
 	parameter "Number of robots" var: num_robots init: 1;
 	parameter "Type and number of random agents" var: randag_map;
+	parameter "Location of each random agent" var: randag_locations;
 }
