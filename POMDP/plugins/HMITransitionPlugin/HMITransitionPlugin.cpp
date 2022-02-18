@@ -75,7 +75,7 @@ public:
 
         VectorFloat floatOutState(outState.begin(), outState.end());
         propagationResult->nextState = std::make_shared<oppt::VectorState>(floatOutState);
-        // std::cout << "Completed method propagateState() in class HMITransitionPlugin...\n";
+        // // std::cout << "Completed method propagateState() in class HMITransitionPlugin...\n";
         return propagationResult;
     }
 
