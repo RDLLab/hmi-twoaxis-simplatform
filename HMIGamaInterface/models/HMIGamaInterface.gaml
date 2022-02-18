@@ -30,8 +30,12 @@ global {
 	                      "_*_*_" +
 	                      "_____";
 	                      
+	string working_directory <- copy_between(command("pwd"), 0, length(command("pwd")) - 1) + "/";
+	
+	string base_config_file <- working_directory + "../includes/HMISolver.cfg";
+	
 	/** Root directory of OPPT. */
-	string base_directory <- copy_between(command("pwd"), 0, length(command("pwd")) - 1) + "/" + "../../oppt_install/oppt/";
+	string base_directory <- working_directory + "/" + "../../oppt_install/oppt/";
 	
 	/** Directory to all information related to the model. */
 	string model_directory <- base_directory + "models/HMIModel/";
@@ -125,10 +129,6 @@ global {
 		string cmd <- command("mkdir -p " + model_directory);
 		do refresh_pipes();
 		do initialise_grid();
-		file cfg_file <- file(config_file_path);
-		loop e over: cfg_file {
-			write e;
-		}
 		write("Completed init() method of species global...");
 	}
 	
@@ -155,8 +155,9 @@ global {
 	
 	action edit_config_file(string robot_state, string random_agent_state) {
 		write "Running method edit_config_file()";
-		file cfg_file <- file(config_file_path);
+		file cfg_file <- file(base_config_file) writable true;
 		map<string, string> to_replace;
+		string res <- "";
 		put robot_state key: "initialRobotState" in: to_replace;
 		put random_agent_state key: "initialRandomAgentState" in: to_replace;
 		put get_state_string() key: "[state]" in: to_replace;
@@ -166,21 +167,23 @@ global {
 		put string(grid_size) key: "numInputStepsActions" in: to_replace;
 		put string(num_conditions) key: "numInputStepsObservations" in: to_replace;
 		loop i from: 0 to: length(cfg_file) - 1 {
+			string to_add <- "";
 			loop k over: to_replace.keys {
 				if ((cfg_file at i) contains k) {
 					if (facets contains k) {
-						loop j from: 5 to: 2 step: -1 {
-							remove i + j from: cfg_file;
-						}
-						put (to_replace at k) in: cfg_file at: i + 1;
+						to_add <- k + "\n\n" + (to_replace at k);
 					}
 					else {
-						put (k + " = " + (to_replace at k)) in: cfg_file at: i;
+						to_add <- k + " = " + (to_replace at k);
 					}
 					remove k from: to_replace;
+					break;
 				}
 			}
+			if (empty(to_add)) {to_add <- cfg_file at i;}
+			res <- res + to_add + "\n";
 		}
+		save res to: config_file_path type: "text";
 	}
 	
 	string get_state_string {
@@ -261,7 +264,7 @@ global {
 		write "Running method initialise_random_agents()";
 		int idx <- 0;
 		string randag_str <- "";
-		string init_state_string <- "initialRandomAgentState = [";
+		string init_state_string <- "[";
 		loop i from: 0 to: length(random_agents) - 1 {
 			list<string> randag_details <- (random_agents at i) split_with ",";
 			string type <- randag_details at 0;
@@ -292,7 +295,7 @@ global {
 	 */
     string initialise_robots {
     	write "Running method initialise_robots()";
-    	string init_state_string <- "initialRobotState = [";
+    	string init_state_string <- "[";
     	loop l over: robot_locations {
     		do create_robot(l);
     		init_state_string <- init_state_string + string(l.x) + ", " + string(l.y) + ", ";
