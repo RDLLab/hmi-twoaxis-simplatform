@@ -7,7 +7,7 @@ namespace hmi
     
 HMIState::HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, std::unordered_map<std::string, TransitionMatrix> typesToMatrices, Grid grid) {
 
-    std::cout << "Running constructor of HMIState..." << std::endl;
+    // std::cout << "Running constructor of HMIState..." << std::endl;
     
     VectorInt state(stateVec.begin(), stateVec.end());
 
@@ -45,13 +45,13 @@ HMIState::HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, std
         randomAgents_.push_back(randomAgent);
     }
 
-    std::cout << "Completed constructor of HMIState..." << std::endl;
+    // std::cout << "Completed constructor of HMIState..." << std::endl;
 
 }
 
 HMIState::HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, Grid grid) {
 
-    std::cout << "Running constructor of HMIState..." << std::endl;
+    // std::cout << "Running constructor of HMIState..." << std::endl;
     
     VectorInt state(stateVec.begin(), stateVec.end());
     grid_ = grid;
@@ -83,7 +83,7 @@ HMIState::HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, Gri
         randomAgents_.push_back(randomAgent);
     }
 
-    std::cout << "Completed constructor of HMIState..." << std::endl;
+    // std::cout << "Completed constructor of HMIState..." << std::endl;
 }
 
 std::vector<HMIRobot> HMIState::getRobots() {
@@ -113,7 +113,7 @@ std::set<HMIRandomAgent*> HMIState::getTargetAgents(VectorFloat& actionVec) {
 }
 
 void HMIState::sampleMovement(int numberOfTurns, std::set<HMIRandomAgent*> targetAgents) {
-    std::cout << "Running method sampleMovement() of HMIState..." << std::endl;
+    // std::cout << "Running method sampleMovement() of HMIState..." << std::endl;
     for (int t = 0; t < numberOfTurns; ++t) {
         for (HMIRandomAgent randAg : getRandomAgents()) {
             if (targetAgents.empty())
@@ -128,11 +128,11 @@ void HMIState::sampleMovement(int numberOfTurns, std::set<HMIRandomAgent*> targe
             }
         }
     }
-    std::cout << "Running method sampleMovement() of HMIState..." << std::endl;
+    // std::cout << "Running method sampleMovement() of HMIState..." << std::endl;
 }
 
 VectorInt HMIState::toVector() {
-    std::cout << "Running method toVector() of HMIState..." << std::endl;
+    // std::cout << "Running method toVector() of HMIState..." << std::endl;
 
     // Initialise the resulting vector of integers.
     int numRobots = ROBOT_ELEMENTS * robots_.size();
@@ -151,7 +151,7 @@ VectorInt HMIState::toVector() {
         res[i + 2] = randomAgents_[idx].getCondition();
     }
 
-    std::cout << "Completed method toVector() of HMIState..." << std::endl;
+    // std::cout << "Completed method toVector() of HMIState..." << std::endl;
 
     // Return the resulting vector, filled with all of the necessary information.
     return res;

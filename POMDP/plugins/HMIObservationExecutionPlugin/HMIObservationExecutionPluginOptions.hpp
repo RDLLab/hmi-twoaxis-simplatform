@@ -19,15 +19,15 @@ public:
     std::string pipePathToSolver = BASE_PATH + "pipes/observationPipeToSolver";
 
     static std::unique_ptr<options::OptionParser> makeParser() {
-        std::cout << "Running method load() in HMIObservationExecutionPluginOptions..." << std::endl;
+        // std::cout << "Running method load() in HMIObservationExecutionPluginOptions..." << std::endl;
         std::unique_ptr<options::OptionParser> parser = PluginOptions::makeParser();
         addHMIObservationExecutionPluginOptions(parser.get());
-        std::cout << "Completed method load() in HMIObservationExecutionPluginOptions..." << std::endl;
+        // std::cout << "Completed method load() in HMIObservationExecutionPluginOptions..." << std::endl;
         return std::move(parser);
     }
 
     static void addHMIObservationExecutionPluginOptions(options::OptionParser* parser) {
-        std::cout << "Running method addHMIObservationExecutionPluginOptions() in HMIObservationExecutionPluginOptions..." << std::endl;
+        // std::cout << "Running method addHMIObservationExecutionPluginOptions() in HMIObservationExecutionPluginOptions..." << std::endl;
         parser->addOption<std::string>("observationExecutionPluginOptions",
                                        "randomAgentsPath",
                                        &HMIObservationExecutionPluginOptions::randomAgentsPath);
@@ -37,7 +37,7 @@ public:
         parser->addOption<std::string>("observationExecutionPluginOptions",
                                        "pipePathToSolver",
                                        &HMIObservationExecutionPluginOptions::pipePathToSolver);
-        std::cout << "Completed method addHMIObservationExecutionPluginOptions() in HMIObservationExecutionPluginOptions..." << std::endl;
+        // std::cout << "Completed method addHMIObservationExecutionPluginOptions() in HMIObservationExecutionPluginOptions..." << std::endl;
     }
 
 private:

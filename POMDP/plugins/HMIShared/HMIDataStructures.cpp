@@ -45,7 +45,7 @@ std::unordered_map<std::string, TransitionMatrix> instantiateTransitionMatrices(
     std::string cmd = "cat < " + pathToMatrices;
     std::string matricesDetails = execute(cmd.c_str());
 
-    // std::cout << "Matrix details are " << matricesDetails << std::endl;
+    // // std::cout << "Matrix details are " << matricesDetails << std::endl;
 
     // Get the number of conditions from the file
     int numberOfConditions = std::stoi(matricesDetails);
@@ -72,18 +72,18 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
     
     // Instantiate data structures for storing which cells are nearby and which paths have
     // already been explored.
-    std::cout << "Instantiating data structures..." << std::endl;
+    // std::cout << "Instantiating data structures..." << std::endl;
     std::set<std::string> explored;
     std::vector<CoordAndPath> frontier = {std::make_pair(Coordinate(x, y), "")};
 
     while (!frontier.empty()) {
 
-        std::cout << "Getting the first element from the frontier..." << std::endl;
+        // std::cout << "Getting the first element from the frontier..." << std::endl;
         // Take the first element of the frontier.
         std::vector<CoordAndPath>::iterator frontIt = frontier.begin();
         Coordinate coord = frontIt->first;
 
-        std::cout << "Getting the coordinates and path from this element..." << std::endl;
+        // std::cout << "Getting the coordinates and path from this element..." << std::endl;
         // Break down the element's x- and y-coordinates and paths.
         int currentX = coord.getX();
         int currentY = coord.getY();
@@ -93,26 +93,26 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
 
             // We've found the shortest path to the destination coordinates,
             // so we return the distance and the path.
-            std::cout << "Found destination!" << std::endl;
+            // std::cout << "Found destination!" << std::endl;
             int distance = path.length();
             return std::make_pair(distance, path);
         }
 
         // Path can now be considered as explored, so we remove it from the frontier.
-        std::cout << "Adding to explored..." << std::endl;
+        // std::cout << "Adding to explored..." << std::endl;
         explored.insert(path);
         frontier.erase(frontIt);
 
         for (size_t i = 0; i < std::min(MOVES.size(), DIRECTIONS.size()); ++i) {
 
             // Obtain new coordinates by (hypothetically) moving in the given direction.
-            std::cout << "Moving in the direction " << MOVES[i] << std::endl;
+            // std::cout << "Moving in the direction " << MOVES[i] << std::endl;
             int newX = currentX + DIRECTIONS[i].getX();
             int newY = currentY + DIRECTIONS[i].getY();
             Coordinate newCoord(newX, newY);
 
             // Conditions to ensure moving in the given direction is actually possible.
-            std::cout << "Deciding whether location is in bounds..." << std::endl;
+            // std::cout << "Deciding whether location is in bounds..." << std::endl;
             bool xInBounds = newX > -1 && newX < grid.getWidth();
             bool yInBounds = newY > -1 && newY < grid.getHeight();
 
@@ -122,12 +122,12 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
                 if (!validCell) return std::make_pair(-1, "");
 
                 // Add the new direction to the current path.
-                std::cout << "Adding new direction to path..." << std::endl;
+                // std::cout << "Adding new direction to path..." << std::endl;
                 std::string newPath = path + MOVES[i];
 
                 // Create a new iterator to check if this new path already exists in
                 // the frontier.
-                std::cout << "Checking if coordinate already exists in frontier..." << std::endl;
+                // std::cout << "Checking if coordinate already exists in frontier..." << std::endl;
                 std::vector<CoordAndPath>::iterator frontierIt = frontier.begin();
 
                 for ( ; frontierIt != frontier.end(); ++frontierIt) {
@@ -137,15 +137,15 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
                 }
 
                 // Use an iterator to determine whether the new path has already been explored.
-                std::cout << "Checking if path has already been explored..." << std::endl;
+                // std::cout << "Checking if path has already been explored..." << std::endl;
                 std::set<std::string>::iterator exploredIt = explored.find(newPath);
 
                 // Determine the total cost of this new path.
-                std::cout << "Determining total cost of new path..." << std::endl;
+                // std::cout << "Determining total cost of new path..." << std::endl;
                 int pathCost = newPath.length() + abs(destX - newX) + abs(destY - newY);
 
                 // Check whether these coordinates are in the frontier or the path has been explored.
-                std::cout << "Checking if coordinates are in frontier or explored..." << std::endl;
+                // std::cout << "Checking if coordinates are in frontier or explored..." << std::endl;
                 bool notInFrontierOrExplored = frontierIt == frontier.end() && exploredIt == explored.end();
 
                 // If these coordinates are already in the frontier, then check if this new path to these
@@ -156,7 +156,7 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
 
                     // If this new path is shorter than the current shortest path in the frontier,
                     // erase the path in the frontier.
-                    std::cout << "Checking if new path is shorter than existing one..." << std::endl;
+                    // std::cout << "Checking if new path is shorter than existing one..." << std::endl;
                     if (lowerPathCostFrontier) frontier.erase(frontierIt);
 
                     // Instantiate an iterator to determine where to place this new path in the frontier
@@ -185,7 +185,7 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
     }
 
     // Unsuccessful in finding the shortest path, so return a "null" result.
-    std::cout << "Couldn't find a shortest path!" << std::endl;
+    // std::cout << "Couldn't find a shortest path!" << std::endl;
     return std::make_pair(-1, "");
 }
 

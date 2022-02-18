@@ -125,15 +125,15 @@ global {
 	 * Initialise all global facets of the model.
 	 */
 	init {
-		write model_directory;
+		// write model_directory;
 		string cmd <- command("mkdir -p " + model_directory);
 		do refresh_pipes();
 		do initialise_grid();
-		write("Completed init() method of species global...");
+		// write("Completed init() method of species global...");
 	}
 	
 	reflex init_agents when: world.cycle = 0 {
-		write "Running method init_agents()";
+		// write "Running method init_agents()";
 		random_agents <- generate_randag_strings();
 		string random_agent_string <- initialise_random_agents();
 		string robot_string <- initialise_robots();
@@ -143,7 +143,7 @@ global {
 	}
 	
 	list<string> generate_randag_strings {
-		write "Running method generate_randag_strings()";
+		// write "Running method generate_randag_strings()";
 		list<string> res <- [];
 		loop r over: randag_map.keys {
 			loop i from: 0 to: (randag_map at r) - 1 {
@@ -154,7 +154,7 @@ global {
 	}
 	
 	action edit_config_file(string robot_state, string random_agent_state) {
-		write "Running method edit_config_file()";
+		// write "Running method edit_config_file()";
 		file cfg_file <- file(base_config_file) writable true;
 		map<string, string> to_replace;
 		string res <- "";
@@ -187,7 +187,7 @@ global {
 	}
 	
 	string get_state_string {
-		write "Running method get_state_string()";
+		// write "Running method get_state_string()";
 		int dimensions <- 2 * length(helper_robot) + 3 * length(random_agent);
 		string add_dim <- "additionalDimensions = " + string(dimensions);
 		string limits <- "additionalDimensionLimits = [";
@@ -205,7 +205,7 @@ global {
 	}
 	
 	string get_action_string {
-		write "Running method get_action_string()";
+		// write "Running method get_action_string()";
 		int dimensions <- 2 * length(helper_robot);
 		string add_dim <- "additionalDimensions = " + string(dimensions);
 		string limits <- "additionalDimensionLimits = [";
@@ -218,7 +218,7 @@ global {
 	}
 	
 	string get_obs_string {
-		write "Running method get_obs_string()";
+		// write "Running method get_obs_string()";
 		int dimensions <- length(random_agent);
 		string add_dim <- "additionalDimensions = " + string(dimensions);
 		string limits <- "additionalDimensionLimits = [";
@@ -234,7 +234,7 @@ global {
 	 * between this program and the solver.
 	 */
 	action refresh_pipes {
-		write "Running method refresh_pipes()";
+		// write "Running method refresh_pipes()";
 		string return_dir <- command("pwd");
 		string cmd <- command("cd ../../oppt_hmi_scripts && ./setPipes.sh");
 		cmd <- command("cd " + return_dir);
@@ -246,7 +246,7 @@ global {
 	 * non-traversable cells, eg. walls).
 	 */
     action initialise_grid {
-    	write "Running method initialise_grid()";
+    	// write "Running method initialise_grid()";
 		ask grid_cell {
 			string cell_id <- grid_layout at ((grid_y * grid_size) + grid_x);
 			traversable <- cell_id = "_";
@@ -261,7 +261,7 @@ global {
 	 *                          as specified by the HMISolver config file
 	 */
 	string initialise_random_agents {
-		write "Running method initialise_random_agents()";
+		// write "Running method initialise_random_agents()";
 		int idx <- 0;
 		string randag_str <- "";
 		string init_state_string <- "[";
@@ -294,7 +294,7 @@ global {
 	 *                          as specified by the HMISolver config file
 	 */
     string initialise_robots {
-    	write "Running method initialise_robots()";
+    	// write "Running method initialise_robots()";
     	string init_state_string <- "[";
     	loop l over: robot_locations {
     		do create_robot(l);
@@ -364,13 +364,13 @@ global {
 	 *                                   a belief
 	 */
 	action create_robot(point start_point) {
-		write("Running create_robot() action of species global...");
+		// write("Running create_robot() action of species global...");
 		create helper_robot {
 			do set_grid_cell(start_point);
 		    location <- my_cell.location;
 		    do set_initial_state();
 		}
-		write("Completed create_robot() action of species global...");
+		// write("Completed create_robot() action of species global...");
 	}
 	
 	/**
@@ -381,7 +381,7 @@ global {
 	 * @param start_condition the random agent's starting condition
 	 */
 	action create_random_agent(string randag_details, point start_point, int start_condition) {
-		write("Running create_dependent() action of species global...");
+		// write("Running create_dependent() action of species global...");
 		create random_agent {
 			do set_type_and_id(randag_details);
 			my_cell <- grid_cell grid_at start_point;
@@ -392,7 +392,7 @@ global {
 			my_icon <- image_file(base + ".jpg");
 			my_help_icon <- image_file(base + "_help.jpg");
 		}
-		write("Completed create_dependent() action of species global...");
+		// write("Completed create_dependent() action of species global...");
 	}
 
     /**
@@ -408,13 +408,13 @@ global {
      *         string form if this method is receiving data
      */
 	string send_to_pipe(string data, string pipe) {
-		write("Running send_to_pipe() function of species global...");
+		// write("Running send_to_pipe() function of species global...");
 		string cmd;
 		if (((pipe split_with ".") at 1) = "txt") {
 	        cmd <- command("touch " + pipe);
 		}
 		cmd <- command("echo -n \"" + data + "\" > " + pipe);
-		write("Completed communicate() function of species global...");
+		// write("Completed communicate() function of species global...");
 		return cmd;
 	}
 }
@@ -460,9 +460,9 @@ species random_agent {
 	 * receiving help from a helper robot.
 	 */
 	init {
-		write("Running init() of species generic_dependent...");
+		// write("Running init() of species generic_dependent...");
 		left_alone <- true;
-		write("Completed init() of species generic_dependent...");
+		// write("Completed init() of species generic_dependent...");
 	}
 	
 	/**
@@ -483,7 +483,7 @@ species random_agent {
      * Changes state according to the agent's stochastic state change matrix.
      */
     reflex change_state when: left_alone {
-    	write("Running change_state() reflex of species generic_dependent...");
+    	// write("Running change_state() reflex of species generic_dependent...");
 	 	int i <- 0;
 	 	list<float> condition_row <- state_change_matrix row_at condition;
 	 	float state_change <- rnd(sum(condition_row)) - (condition_row at i);
@@ -492,14 +492,14 @@ species random_agent {
 	 		state_change <- state_change - (condition_row at i);
 	 	}
 	 	condition <- i;
-	 	write("Completed change_state() reflex of species generic_dependent...");
+	 	// write("Completed change_state() reflex of species generic_dependent...");
     }
     
     /**
      * Makes a random move to a neighboring cell with 50% chance.
      */
     reflex make_move when: condition = 0 and left_alone {
-    	write("Running make_move() reflex of species generic_dependent...");
+    	// write("Running make_move() reflex of species generic_dependent...");
     	int move_counter <- rnd(7);
         int x_change <- 0;
     	int y_change <- 0;
@@ -509,7 +509,7 @@ species random_agent {
 	 	else if (move_counter = 3) {x_change <- -1;}
 	 	my_cell <- my_cell.find_neighboring_cell(x_change, y_change);
 	 	location <- my_cell.location;
-	 	write("Completed make_move() reflex of species generic_dependent...");
+	 	// write("Completed make_move() reflex of species generic_dependent...");
     }
     
     /**
@@ -657,13 +657,13 @@ species helper_robot {
 	 * @param a the random agent that this helper robot is looking for
 	 */
 	action look_for(random_agent a) {
-		write("Running look_for() action of species helper_robot...");
+		// write("Running look_for() action of species helper_robot...");
 		float c <- 0.8;
 	 	bool can_see <- can_see(a.my_cell);
 	 	if can_see and rnd(100) / 100.0 <= c {
 	 		put a.condition key: a.name in: randag_conditions;
 	 	}
-	 	write("Completed look_for() action of species helper_robot...");
+	 	// write("Completed look_for() action of species helper_robot...");
 	 }
 	 
 	 /**
@@ -673,13 +673,13 @@ species helper_robot {
 	  * @param a the given random agent
 	  */
 	action help_agent(random_agent a) {
-	 	write("Running help_agent() action of species helper_robot...");
+	 	// write("Running help_agent() action of species helper_robot...");
 	 	ask a {
 	 		left_alone <- true;
 	 		condition <- 0;
 	 	}
 	 	put a.condition key: a.name in: randag_conditions;
-	 	write("Completed help_agent() action of species helper_robot...");
+	 	// write("Completed help_agent() action of species helper_robot...");
 	}
 	 
 	 /**
@@ -687,7 +687,7 @@ species helper_robot {
 	  * condition as well.
 	  */
     reflex look_around {
-	    write("Running look_around() reflex of species helper_robot...");
+	    // write("Running look_around() reflex of species helper_robot...");
 	 	loop r over: random_agent {
 	 		put {r.my_cell.grid_x, r.my_cell.grid_y} key: r.name in: randag_locations;
 	 		float c <- 0.8;
@@ -697,7 +697,7 @@ species helper_robot {
 	 		//do look_for(r);
 	 		
 	 	}
-	 	write("Completed look_around() reflex of species helper_robot...");
+	 	// write("Completed look_around() reflex of species helper_robot...");
 	}
 	 
 	 /**
@@ -739,8 +739,10 @@ species helper_robot {
 		list<string> state_and_obs <- get_state_and_observation();
 	 	string next_state <- state_and_obs at 0;
 	 	string observation <- state_and_obs at 1;
-	 	write("State string to send is " + state_and_obs at 0);
-	 	write("observation string to send is " + state_and_obs at 1);
+	 	write("Next State:\n" + next_state);
+	 	write("Observation:\n" + observation);
+	 	// write("State string to send is " + state_and_obs at 0);
+	 	// write("observation string to send is " + state_and_obs at 1);
 	 	string res <- world.send_to_pipe(next_state, state_to_solver);
 	 	res <- world.send_to_pipe(observation, obs_to_solver);
 	}
@@ -770,15 +772,16 @@ species helper_robot {
 	}
 	
 	reflex take_action when: empty(path_to_follow) {
-	    write("Running take_action() reflex of species helper_robot...");
+	    // write("Running take_action() reflex of species helper_robot...");
 	    ask my_cell {
 	 		color <- #white;
 	 	}
 	 	if (has_observations) {do send_state_and_observation();}
-	 	write("Helper robot is waiting for action...");
+	 	// write("Helper robot is waiting for action...");
 	 	string action_str <- command("cat < " + path_to_gama);
 	 	action_str <- copy_between(action_str, 0, length(action_str) - 1);
-	 	write("Received action " + action_str + " from solver");
+	 	write("ACTION:\n" + action_str);
+	 	// write("Received action " + action_str + " from solver");
 	 	list<int> points <- action_str split_with ",";
 	 	point<int> randag_point <- {points at 0, points at 1};
 	 	grid_cell target_cell <- grid_cell grid_at randag_point;
@@ -788,25 +791,25 @@ species helper_robot {
 	 		color <- #orange;
 	 	}
 	 	has_observations <- true;
-	 	write("Completed take_action() reflex of species helper_robot...");
+	 	// write("Completed take_action() reflex of species helper_robot...");
 	 }
 	 
 	 reflex execute_step when: !empty(path_to_follow) {
-	 	write("Running execute_step() reflex of species helper_robot...");
+	 	// write("Running execute_step() reflex of species helper_robot...");
 	 	my_cell <- grid_cell(path_to_follow at 0);
 	 	location <- my_cell.location;
 	 	path_to_follow <- copy_between(path_to_follow, 1, length(path_to_follow));
-	 	write("Completed execute_step() reflex of species helper_robot...");
+	 	// write("Completed execute_step() reflex of species helper_robot...");
 	 }
 	 
 	 reflex help_agent {
-	 	write("Running help_agent() reflex of species helper_robot...");
+	 	// write("Running help_agent() reflex of species helper_robot...");
 	 	loop r over: random_agent {
 	 		if (my_cell = r.my_cell) {
 	 			do help_agent(r);
 	 		}
 	 	}
-	 	write("Completed help_agent() reflex of species helper_robot...");
+	 	// write("Completed help_agent() reflex of species helper_robot...");
 	 }
 	 
 	 action shrink_and_justify(int num_randags) {
@@ -846,16 +849,16 @@ grid grid_cell width: grid_size height: grid_size neighbors: 4 {
 	 * @return        the cell at the correct offset from the given cell
 	 */
 	grid_cell find_neighboring_cell(int x_diff, int y_diff) {
-		write("Running find_neighboring_cell() function of species grid_cell...");
+		// write("Running find_neighboring_cell() function of species grid_cell...");
 		point new_point <- {self.grid_x + x_diff, self.grid_y + y_diff};
 		bool x_out <- new_point.x < 0 or new_point.x >= grid_size;
 		bool y_out <- new_point.y < 0 or new_point.y >= grid_size;
 		if (x_out or y_out) {return self;}
 		if ((grid_cell grid_at new_point).traversable) {
-			write("Completed find_neighboringin_cell() function of species grid_cell...");
+			// write("Completed find_neighboringin_cell() function of species grid_cell...");
 			return grid_cell grid_at new_point;
 		}
-		write("Completed find_neighboring_cell() function of species grid_cell...");
+		// write("Completed find_neighboring_cell() function of species grid_cell...");
 		return self;
     }
 }

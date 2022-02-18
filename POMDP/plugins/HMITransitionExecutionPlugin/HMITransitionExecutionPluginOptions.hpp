@@ -18,15 +18,15 @@ public:
     std::string pipePathToSolver = BASE_PATH + "pipes/statePipeToSolver";
 
     static std::unique_ptr<options::OptionParser> makeParser() {
-        std::cout << "Running method makeParser() in HMITransitionExecutionPluginOptions..." << std::endl;
+        // std::cout << "Running method makeParser() in HMITransitionExecutionPluginOptions..." << std::endl;
         std::unique_ptr<options::OptionParser> parser = PluginOptions::makeParser();
         addHMITransitionExecutionPluginOptions(parser.get());
-        std::cout << "Completed method makeParser() in HMITransitionExecutionPluginOptions..." << std::endl;
+        // std::cout << "Completed method makeParser() in HMITransitionExecutionPluginOptions..." << std::endl;
         return std::move(parser);
     }
 
     static void addHMITransitionExecutionPluginOptions(options::OptionParser* parser) {
-        std::cout << "Running method addHMITransitionExecutionPluginOptions() in HMITransitionExecutionPluginOptions..." << std::endl;
+        // std::cout << "Running method addHMITransitionExecutionPluginOptions() in HMITransitionExecutionPluginOptions..." << std::endl;
         parser->addOption<std::string>("transitionExecutionPluginOptions",
                                        "randomAgentsPath",
                                        &HMITransitionExecutionPluginOptions::randomAgentsPath);
@@ -36,7 +36,7 @@ public:
         parser->addOption<std::string>("transitionExecutionPluginOptions",
                                        "pipePathToSolver",
                                        &HMITransitionExecutionPluginOptions::pipePathToSolver);
-        std::cout << "Completed method addHMITransitionExecutionPluginOptions() in HMITransitionExecutionPluginOptions..." << std::endl;
+        // std::cout << "Completed method addHMITransitionExecutionPluginOptions() in HMITransitionExecutionPluginOptions..." << std::endl;
     }
 
 private:
