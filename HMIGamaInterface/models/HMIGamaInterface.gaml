@@ -73,10 +73,11 @@ global {
 	list<point> robot_locations <- [{2,2}];
 	
 	map<string, list<point>> randag_locations <- create_map(randag_types, [[{0,0}], [{4,4}]]);
+	map<string, list<int>> randag_conditions <- create_map(randag_types, [[0], [0]]);
 	
 	//list<point> randag_locations <- [{0,0}, {4,4}];
 	
-	list<int> randag_conditions <- [0,0];
+	//list<int> randag_conditions <- [0,0];
 	
 	/** A map mapping each random agent type to its corresponding condition 
 	 * transition matrix.
@@ -266,7 +267,7 @@ global {
 			string type <- randag_details at 0;
 			int id <- int(randag_details at 1);
 			point start_point <- (randag_locations at type) at id;
-			int start_condition <- randag_conditions at i;
+			int start_condition <- (randag_conditions at type) at id;
 			do create_random_agent(random_agents at i, start_point, start_condition);
 			randag_str <- randag_str + (random_agents at i) + "\n";
 			init_state_string <- init_state_string + string(start_point.x) + ", " + string(start_point.y) + ", " + string(start_condition);
@@ -599,7 +600,7 @@ species helper_robot {
 			string type <- randag_details at 0;
 			int id <- int(randag_details at 1);
 			put ((world.randag_locations at type) at id) key: (random_agents at i) in: randag_locations;
-			put (world.randag_conditions at i) key: (random_agents at i) in: randag_conditions;
+			put ((world.randag_conditions at type) at id) key: (random_agents at i) in: randag_conditions;
 		}
 	}
 	
@@ -862,4 +863,5 @@ experiment out type: gui {
 	parameter "Number of robots" var: num_robots init: 1;
 	parameter "Type and number of random agents" var: randag_map;
 	parameter "Location of each random agent" var: randag_locations;
+	parameter "Condition of each random agent" var: randag_conditions;
 }
