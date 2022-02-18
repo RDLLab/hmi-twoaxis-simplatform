@@ -103,6 +103,9 @@ The reward plugin maximally rewards the solver if all random agents have conditi
 ## Running the Simulation
 
 Because there is so much data being sent between GAMA and OPPT, it is important to follow these steps precisely.
+
+Before you run these steps, make sure you have unzipped `oppt_install.zip`.
+
 1. In the [GAMA IDE](https://gama-platform.org/download), import the directory `HMIGamaInterface`.
 2. Press the green play button at the top of the GAMA window. This will take you to the grid. You should see two categories on the left of the screen: `Robots` and `Random Agents`.
 3. If you wish to change the existing random agent settings, you may do so. In the category `Number of Random Agents`, you will see a map of random agent types corresponding to how many of them will be in the simulation. You can edit this map and, provided you add images and define a transition matrix, create new types as well. Make sure that the number of locations and conditions for each type in `Random Agent Locations` and `Random Agent Conditions` respectively match how many random agents are in the simulation as defined by `Number of Random Agents`. Note that the `Robot` parameters have not been extensively tested, and so are not guaranteed to work just yet.
