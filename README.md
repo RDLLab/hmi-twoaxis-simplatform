@@ -99,3 +99,12 @@ If no helper robot observes $$c_i$$ for random agent $$R_i$$ during the executio
 ### Reward Plugin
 
 The reward plugin maximally rewards the solver if all random agents have condition `0`, that is, if all random agents in the problem are happy. If there are unhappy random agents (ones that do not have condition `0`), then the solver is penalised depending on how many random agents are unhappy and how far the robot is away from these unhappy agents.
+
+## Running the Simulation
+
+Because there is so much data being sent between GAMA and OPPT, it is important to follow these steps precisely.
+1. In the [GAMA IDE](https://gama-platform.org/download), import the directory `HMIGamaInterface`.
+2. Press the green play button at the top of the GAMA window. This will take you to the grid. You should see two categories on the left of the screen: `Robots` and `Random Agents`.
+3. If you wish to change the existing random agent settings, you may do so. In the category `Number of Random Agents`, you will see a map of random agent types corresponding to how many of them will be in the simulation. You can edit this map and, provided you add images and define a transition matrix, create new types as well. Make sure that the number of locations and conditions for each type in `Random Agent Locations` and `Random Agent Conditions` respectively match how many random agents are in the simulation as defined by `Number of Random Agents`. Note that the `Robot` parameters have not been extensively tested, and so are not guaranteed to work just yet.
+4. When you are satisfied with the parameters you have set, press the green play button again. Sometimes the agents in the problem do not appear straight away. If this happens, double click on the simulation, and they should appear. Some of the random agents may not be in the location specified initially. This is because random agents move in GAMA before the robot does. The program should be hanging at this point.
+5. Now, open a terminal and navigate to `oppt_hmi_scripts`. When you have arrived there, run the `execute.sh` script using the command `./execute.sh`. The model should now be running.
