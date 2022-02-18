@@ -771,6 +771,9 @@ species helper_robot {
 	
 	reflex take_action when: empty(path_to_follow) {
 	    write("Running take_action() reflex of species helper_robot...");
+	    ask my_cell {
+	 		color <- #white;
+	 	}
 	 	if (has_observations) {do send_state_and_observation();}
 	 	write("Helper robot is waiting for action...");
 	 	string action_str <- command("cat < " + path_to_gama);
@@ -781,6 +784,9 @@ species helper_robot {
 	 	grid_cell target_cell <- grid_cell grid_at randag_point;
 	 	do notify_random_agents(target_cell);
 	 	path_to_follow <- find_path_to_target(target_cell);
+	 	ask target_cell {
+	 		color <- #orange;
+	 	}
 	 	has_observations <- true;
 	 	write("Completed take_action() reflex of species helper_robot...");
 	 }
@@ -863,8 +869,9 @@ experiment out type: gui {
 			species random_agent aspect: sprite;
 		}
 	}
-	parameter "Number of robots" var: num_robots init: 1;
-	parameter "Type and number of random agents" var: randag_map;
-	parameter "Location of each random agent" var: randag_locations;
-	parameter "Condition of each random agent" var: randag_conditions;
+	parameter "Number of robots" category: "Robot" var: num_robots init: 1;
+	parameter "Location of each robot" category: "Robot" var: robot_locations;
+	parameter "Type and number of random agents" category: "Random agents" var: randag_map;
+	parameter "Location of each random agent" category: "Random agents" var: randag_locations;
+	parameter "Condition of each random agent" category: "Random agents" var: randag_conditions;
 }
