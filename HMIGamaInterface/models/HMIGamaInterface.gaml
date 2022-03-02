@@ -296,8 +296,9 @@ global {
     string initialise_robots {
     	// write "Running method initialise_robots()";
     	string init_state_string <- "[";
-    	loop l over: robot_locations {
-    		do create_robot(l);
+    	loop i from: 0 to: num_robots - 1 {
+    		point l <- robot_locations at i;
+    		do create_robot(l, i);
     		init_state_string <- init_state_string + string(l.x) + ", " + string(l.y) + ", ";
     	}
     	return copy_between(init_state_string, 0, length(init_state_string) - 2) + "]";
@@ -363,10 +364,13 @@ global {
 	 *                                   in the problem, useful for formulating
 	 *                                   a belief
 	 */
-	action create_robot(point start_point) {
+	action create_robot(point start_point, int id) {
 		// write("Running create_robot() action of species global...");
 		create helper_robot {
-			do set_grid_cell(start_point);
+			if (id = 0) {
+				has_key <- true;
+			}
+			do set_grid_cell(start_point, id);
 		    location <- my_cell.location;
 		    do set_initial_state();
 		}
@@ -548,6 +552,8 @@ species random_agent {
 
 species helper_robot {
 	
+	int id;
+	
 	/** The grid cell occupied by this helper robot. */
 	grid_cell my_cell;
 	
@@ -566,6 +572,8 @@ species helper_robot {
 	 *  helper robot. */
 	map<string, point> randag_locations;
 	
+	bool has_key <- false;
+	
 	/** The sprite of this helper robot, used for visualisation in 
 	 * experiments. */
 	image_file my_icon <- image_file("../includes/robot.jpg");
@@ -579,7 +587,7 @@ species helper_robot {
 	 * 
 	 * @param start_point the starting point of this robot
 	 */
-	action set_grid_cell(point start_point) {
+	action set_grid_cell(point start_point, int id) {
 		bool x_out <- start_point.x < 0 or start_point.x >= grid_size;
 		bool y_out <- start_point.y < 0 or start_point.y >= grid_size;
 		if (x_out or y_out) {
@@ -588,6 +596,7 @@ species helper_robot {
 		else {
 			my_cell <- grid_cell[start_point.x, start_point.y];
 		}
+		self.id <- id;
 	}
 	
 	/**
@@ -771,11 +780,22 @@ species helper_robot {
 	 	return shortest_path.vertices;
 	}
 	
-	reflex take_action when: empty(path_to_follow) {
+	action do_action(point<int> target_point) {
+		grid_cell target_cell <- grid_cell grid_at target_point;
+		do notify_random_agents(target_cell);
+		path_to_follow <- find_path_to_target(target_cell);
+		ask target_cell {
+			color <- #orange;
+		}
+		has_observations <- true;
+	}
+	
+	reflex take_action when: empty(path_to_follow) and has_key {
 	    // write("Running take_action() reflex of species helper_robot...");
 	    ask my_cell {
 	 		color <- #white;
 	 	}
+	 	has_key <- false;
 	 	if (has_observations) {do send_state_and_observation();}
 	 	// write("Helper robot is waiting for action...");
 	 	string action_str <- command("cat < " + path_to_gama);
@@ -783,14 +803,25 @@ species helper_robot {
 	 	write("ACTION:\n" + action_str);
 	 	// write("Received action " + action_str + " from solver");
 	 	list<int> points <- action_str split_with ",";
-	 	point<int> randag_point <- {points at 0, points at 1};
-	 	grid_cell target_cell <- grid_cell grid_at randag_point;
-	 	do notify_random_agents(target_cell);
-	 	path_to_follow <- find_path_to_target(target_cell);
-	 	ask target_cell {
-	 		color <- #orange;
+	 	pair<helper_robot, int> max_robot_path_length <- nil::-1;
+	 	loop i from: 0 to: length(helper_robot) - 1 {
+	 		point<int> target_point <- {points at 2*i, points at 2*i + 1};
+	 		ask helper_robot at i {
+	 			do do_action(target_point);
+	 			int path_length <- length((helper_robot at i).path_to_follow);
+	 			if (path_length > max_robot_path_length.value) {
+	 				max_robot_path_length <- (helper_robot at i)::path_length;
+	 			}
+	 		}
 	 	}
-	 	has_observations <- true;
+	 	if (max_robot_path_length.key = nil) {
+	 		error "Could not give key to any robot!!";
+	 	}
+	 	else {
+	 		ask max_robot_path_length.key {
+	 			has_key <- true;
+	 		}
+	 	}
 	 	// write("Completed take_action() reflex of species helper_robot...");
 	 }
 	 
