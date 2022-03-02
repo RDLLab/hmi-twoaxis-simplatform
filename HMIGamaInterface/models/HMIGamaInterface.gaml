@@ -542,7 +542,7 @@ species random_agent {
      * agents.
      */
     action shrink_and_justify {
-    	write "Running method shrink_and_justify() of species random_agent...";
+    	// write "Running method shrink_and_justify() of species random_agent...";
     	my_size <- size / reduction_factor;
     	list<point> offsets <- [{-1, -1}, {1, -1}, {-1, 1}, {1, 1}];
     	loop i from: 0 to: length(my_cell.dependents_in_cell) - 1 {
@@ -551,7 +551,7 @@ species random_agent {
     			location <- location + (offsets at i) * multiplier;
     		}
     	}
-    	write "Completed method shrink_and_justify() of species random_agent...";
+    	// write "Completed method shrink_and_justify() of species random_agent...";
     }
     
     /**
@@ -561,14 +561,14 @@ species random_agent {
      * seen. It also changes the sprite's colour if it needs help.
      */
     aspect sprite {
-    	write "Running method sprite() of species random_agent...";
+    	// write "Running method sprite() of species random_agent...";
     	bool other_randags <- length(my_cell.dependents_in_cell) > 1;
     	bool is_there_robot <- !empty(my_cell.robots_in_cell);
     	if (other_randags or is_there_robot) {do shrink_and_justify();}
     	else                                 {my_size <- size;}
     	if (condition = 0) {draw my_icon size: my_size;}
     	else               {draw my_help_icon size: my_size;}
-    	write "Completed method sprite() of species random_agent...";
+    	// write "Completed method sprite() of species random_agent...";
     }
 	
 }
@@ -820,6 +820,10 @@ species helper_robot {
 	}
 	
 	action do_action(point<int> target_point) {
+		write "Target point is " + string(target_point);
+		ask my_cell {
+	 		color <- #white;
+	 	}
 		grid_cell target_cell <- grid_cell grid_at target_point;
 		do notify_random_agents(target_cell);
 		path_to_follow <- find_path_to_target(target_cell);
@@ -831,9 +835,6 @@ species helper_robot {
 	
 	reflex take_action when: empty(path_to_follow) and has_key {
 	    // write("Running take_action() reflex of species helper_robot...");
-	    ask my_cell {
-	 		color <- #white;
-	 	}
 	 	has_key <- false;
 	 	if (has_observations) {do send_state_and_observation();}
 	 	// write("Helper robot is waiting for action...");
@@ -844,7 +845,7 @@ species helper_robot {
 	 	list<int> points <- action_str split_with ",";
 	 	pair<helper_robot, int> max_robot_path_length <- self::-1;
 	 	loop i from: 0 to: length(helper_robot) - 1 {
-	 		point<int> target_point <- {points at 2*i, points at 2*i + 1};
+	 		point<int> target_point <- {points at (2*i), points at (2*i + 1)};
 	 		ask helper_robot at i {
 	 			do do_action(target_point);
 	 			int path_length <- length((helper_robot at i).path_to_follow);
