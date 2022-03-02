@@ -24,7 +24,7 @@ public:
 
     HMIState getUnderlyingState();
 
-    std::unordered_map<HMIRandomAgent*, int> getObservations();
+    std::unordered_map<std::string, int> getObservations();
 
     void makeObservations();
 
@@ -37,7 +37,7 @@ public:
 private:
 
     HMIState *underlyingState_;
-    std::unordered_map<HMIRandomAgent*, int> observations_;
+    std::unordered_map<std::string, int> observations_;
     VectorInt originalConditions_;
     const double SEE_CONDITION_PROBABILITY = 0.8;
 

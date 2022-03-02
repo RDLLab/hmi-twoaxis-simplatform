@@ -27,9 +27,6 @@ const FloatType BASE_REWARD = 100.0;
 const FloatType MAX_REWARD = 10000.0;
 const FloatType MIN_REWARD = -1000000000.0;
 
-const std::string PIPE_PATH_TO_GAMA = "~/oppt_test_install/oppt/pipes/pipeToGama";
-const std::string PIPE_PATH_TO_SOLVER = "~/oppt_test_install/oppt/pipes/pipeToSolver";
-
 typedef std::pair<std::string, int> TypeAndId;
 
 const VectorString MOVES = {"N", "E", "S", "W"};
@@ -51,6 +48,8 @@ struct Grid {
     **/
     Grid(std::string &gridDetails) {
 
+        std::cout << "Running constructor of Grid()..." << std::endl;
+
         // Set the width of the grid
         width_ = std::stoi(gridDetails);
         gridDetails = gridDetails.substr(gridDetails.find(",") + 1);
@@ -67,6 +66,8 @@ struct Grid {
             // to the given data
             grid_[i] = gridDetails.at(i) == '_';
         }
+
+        std::cout << "Completed constructor of Grid()..." << std::endl;
     }
 
     int getWidth() const {

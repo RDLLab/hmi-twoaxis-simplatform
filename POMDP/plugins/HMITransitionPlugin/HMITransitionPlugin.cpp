@@ -56,7 +56,7 @@ public:
         std::set<hmi::HMIRandomAgent*> targetAgents = observation.getUnderlyingState().getTargetAgents(actionVec);
 
         std::vector<std::string> shortestPaths(currentState.getRobots().size());
-        int maxShortestPath = -1;
+        int maxShortestPath = 0;
         for (size_t i = 0; i != currentState.getRobots().size(); ++i) {
             hmi::HMIRobot robot = currentState.getRobots()[i];
             int robotX = robot.getCoordinates().getX();
@@ -64,6 +64,8 @@ public:
             int actionX = (int) actionVec[2*i];
             int actionY = (int) actionVec[2*i + 1];
             std::pair<int, std::string> path = hmi::getShortestPath(grid_, robotX, robotY, actionX, actionY);
+            std::cout << "From (" << robotX << "," << robotY << ") to (" << actionX << "," << actionY << "):" << std::endl;
+            std::cout << "Shortest distance is " << path.first << std::endl;
             shortestPaths[i] = path.second;
             maxShortestPath = std::max(path.first, maxShortestPath);
         }
@@ -75,7 +77,7 @@ public:
 
         VectorFloat floatOutState(outState.begin(), outState.end());
         propagationResult->nextState = std::make_shared<oppt::VectorState>(floatOutState);
-        // // std::cout << "Completed method propagateState() in class HMITransitionPlugin...\n";
+        // std::cout << "Completed method propagateState() in class HMITransitionPlugin...\n";
         return propagationResult;
     }
 

@@ -7,15 +7,18 @@ namespace hmi
 {
 
 Grid instantiateGrid(std::string &pathToGrid) {
+    // std::cout << "Running method instantiateGrid() of class HMIDataStructures..." << std::endl;
 
     // Extract the grid details from the plaintext and return them in struct form
     std::string cmd = "cat < " + pathToGrid;
     std::string gridDetails = execute(cmd.c_str());
     // std::cout << "The grid is " << gridDetails << std::endl;
+    // std::cout << "Completed method instantiateGrid() of class HMIDataStructures..." << std::endl;
     return Grid(gridDetails);
 }
 
 std::vector<TypeAndId> instantiateTypesAndIDs(std::string &pathToRandomAgents) {
+    // std::cout << "Running method instantiateTypesAndIDs() of class HMIDataStructures..." << std::endl;
 
     // Get details from the file containing details about all random agents.
     std::string cmd = "cat < " + pathToRandomAgents;
@@ -27,25 +30,27 @@ std::vector<TypeAndId> instantiateTypesAndIDs(std::string &pathToRandomAgents) {
 
         // Extract the type of the current agent from the plaintext data.
         std::string type = typesAndIDsDetails.substr(0, typesAndIDsDetails.find(","));
-        // // std::cout << "Type is " << type << std::endl;
+        // std::cout << "Type is " << type << std::endl;
         typesAndIDsDetails = typesAndIDsDetails.substr(typesAndIDsDetails.find(",") + 1);
 
         // Extract the ID of the current agent from the plaintext data.
         int id = std::stoi(typesAndIDsDetails);
-        // // std::cout << "ID is " << std::to_string(id) << std::endl;
+        // std::cout << "ID is " << std::to_string(id) << std::endl;
         typesAndIDsDetails = typesAndIDsDetails.substr(typesAndIDsDetails.find("\n") + 1);
 
         // Add this to the resulting vector.
         out.push_back(std::make_pair(type, id));
     }
+    // std::cout << "Completed method instantiateTypesAndIDs() of class HMIDataStructures..." << std::endl;
     return out;
 }
 
 std::unordered_map<std::string, TransitionMatrix> instantiateTransitionMatrices(std::string &pathToMatrices) {
+    // std::cout << "Running method instantiateTransitionMatrices() of class HMIDataStructures..." << std::endl;
     std::string cmd = "cat < " + pathToMatrices;
     std::string matricesDetails = execute(cmd.c_str());
 
-    // // std::cout << "Matrix details are " << matricesDetails << std::endl;
+    // std::cout << "Matrix details are " << matricesDetails << std::endl;
 
     // Get the number of conditions from the file
     int numberOfConditions = std::stoi(matricesDetails);
@@ -64,17 +69,24 @@ std::unordered_map<std::string, TransitionMatrix> instantiateTransitionMatrices(
         typesToMatrices.insert(std::pair<std::string, TransitionMatrix>(type, TransitionMatrix(numberOfConditions, matrixDetails)));
         matricesDetails = matricesDetails.substr(matricesDetails.find("\n") + 1);
     }
+    // std::cout << "Completed method instantiateTransitionMatrices() of class HMIDataStructures..." << std::endl;
 
     return typesToMatrices;
 }
 
 std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int destX, int destY) {
+    // std::cout << "Running method getShortestPath() of class HMIDataStructures..." << std::endl;
+    // std::cout << "From: (" << x << "," << y << ") To: (" << destX << "," << destY << std::endl;
     
     // Instantiate data structures for storing which cells are nearby and which paths have
     // already been explored.
     // std::cout << "Instantiating data structures..." << std::endl;
     std::set<std::string> explored;
     std::vector<CoordAndPath> frontier = {std::make_pair(Coordinate(x, y), "")};
+
+    if (!grid.getGrid()[Coordinate(destX, destY).toPosition(grid)]) {
+        return std::make_pair(-1, "");
+    }
 
     while (!frontier.empty()) {
 
@@ -95,6 +107,7 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
             // so we return the distance and the path.
             // std::cout << "Found destination!" << std::endl;
             int distance = path.length();
+            // std::cout << "Completed method getShortestPath() of class HMIDataStructures..." << std::endl;
             return std::make_pair(distance, path);
         }
 
@@ -112,14 +125,17 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
             Coordinate newCoord(newX, newY);
 
             // Conditions to ensure moving in the given direction is actually possible.
-            // std::cout << "Deciding whether location is in bounds..." << std::endl;
+            // std::cout << "Deciding whether location (" << newX << "," << newY << ") is in bounds..." << std::endl;
             bool xInBounds = newX > -1 && newX < grid.getWidth();
             bool yInBounds = newY > -1 && newY < grid.getHeight();
 
             if (xInBounds && yInBounds) {
 
+                // std::cout << "(" << newX << "," << newY << ") to position is " << newCoord.toPosition(grid) << std::endl;
                 bool validCell = grid.getGrid()[newCoord.toPosition(grid)];
-                if (!validCell) return std::make_pair(-1, "");
+                if (!validCell) {
+                    continue;
+                }
 
                 // Add the new direction to the current path.
                 // std::cout << "Adding new direction to path..." << std::endl;
@@ -150,7 +166,7 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
 
                 // If these coordinates are already in the frontier, then check if this new path to these
                 // coordinates is shorter than the existing shortest path to them.
-                bool lowerPathCostFrontier = frontierIt != frontier.end() && newPath.length() < frontierIt->second.length();
+                bool lowerPathCostFrontier = frontierIt != frontier.end() && exploredIt == explored.end() && newPath.length() < frontierIt->second.length();
 
                 if (notInFrontierOrExplored || lowerPathCostFrontier) {
 
@@ -162,6 +178,7 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
                     // Instantiate an iterator to determine where to place this new path in the frontier
                     // according to its total cost.
                     std::vector<CoordAndPath>::iterator insertIt = frontier.begin();
+                    CoordAndPath toAdd(newCoord, newPath);
                     for ( ; insertIt != frontier.end(); ++insertIt) {
 
                         // Determine the total path cost of the given element in the frontier.
@@ -174,11 +191,12 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
                             // The cost of the new path is smaller than the cost of the given element in
                             // the frontier, so we insert the path into the index before the given element
                             // in the frontier.
-                            CoordAndPath toAdd(newCoord, newPath);
+                            // std::cout << "added new path " << newPath << " to frontier!" << std::endl;
                             frontier.insert(insertIt, toAdd);
                             break;
                         }
                     }
+                    if (insertIt == frontier.end()) frontier.push_back(toAdd);
                 }
             }
         }
@@ -186,6 +204,7 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
 
     // Unsuccessful in finding the shortest path, so return a "null" result.
     // std::cout << "Couldn't find a shortest path!" << std::endl;
+    // std::cout << "Completed method getShortestPath() of class HMIDataStructures..." << std::endl;
     return std::make_pair(-1, "");
 }
 

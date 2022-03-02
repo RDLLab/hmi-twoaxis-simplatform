@@ -35,7 +35,7 @@ global {
 	string base_config_file <- working_directory + "../includes/HMISolver.cfg";
 	
 	/** Root directory of OPPT. */
-	string base_directory <- working_directory + "/" + "../../oppt_install/oppt/";
+	string base_directory <- working_directory + "../../oppt_install/oppt/";
 	
 	/** Directory to all information related to the model. */
 	string model_directory <- base_directory + "models/HMIModel/";

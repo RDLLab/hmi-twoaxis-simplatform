@@ -7,16 +7,20 @@ namespace hmi
     
 HMIState::HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, std::unordered_map<std::string, TransitionMatrix> typesToMatrices, Grid grid) {
 
-    // std::cout << "Running constructor of HMIState..." << std::endl;
+    // std::cout << "Running 4-parameter constructor of HMIState..." << std::endl;
     
+    // std::cout << "Initialising state vector..." << std::endl;
     VectorInt state(stateVec.begin(), stateVec.end());
 
     // Initialise robot coordinates and grid structure.
+    // std::cout << "Copying over grid..." << std::endl;
     grid_ = grid;
 
-    size_t numRobots = 2 * (state.size() - typesAndIDs.size());
+    // std::cout << "Finding number of robots..." << std::endl;
+    size_t numRobots = state.size() - RANDOM_AGENT_ELEMENTS * typesAndIDs.size();
 
     for (size_t i = 0; i != numRobots; i += ROBOT_ELEMENTS) {
+        // std::cout << "Making robot #" << i << std::endl;
         HMIRobot hmiRobot(state[i], state[i + 1]);
         robots_.push_back(hmiRobot);
     }
@@ -51,13 +55,17 @@ HMIState::HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, std
 
 HMIState::HMIState(VectorFloat stateVec, std::vector<TypeAndId> typesAndIDs, Grid grid) {
 
-    // std::cout << "Running constructor of HMIState..." << std::endl;
+    // std::cout << "Running 2-parameter constructor of HMIState..." << std::endl;
     
     VectorInt state(stateVec.begin(), stateVec.end());
+
+    // std::cout << "Copying over grid..." << std::endl;
     grid_ = grid;
-    size_t numRobots = 2 * (state.size() - typesAndIDs.size());
+    // std::cout << "Finding number of robots..." << std::endl;
+    size_t numRobots = state.size() - RANDOM_AGENT_ELEMENTS * typesAndIDs.size();
 
     for (size_t i = 0; i != numRobots; i += ROBOT_ELEMENTS) {
+        // std::cout << "Making robot #" << i << std::endl;
         HMIRobot hmiRobot(state[i], state[i + 1]);
         robots_.push_back(hmiRobot);
     }
@@ -99,6 +107,7 @@ std::vector<HMIRandomAgent> HMIState::getRandomAgents() {
 }
 
 std::set<HMIRandomAgent*> HMIState::getTargetAgents(VectorFloat& actionVec) {
+    // std::cout << "Running method getTargetAgents() of class HMIState..." << std::endl;
     std::set<HMIRandomAgent*> targetAgents;
     for (size_t i = 0; i != actionVec.size(); i += 2) {
         int actionX = actionVec[i];
@@ -109,6 +118,7 @@ std::set<HMIRandomAgent*> HMIState::getTargetAgents(VectorFloat& actionVec) {
             }
         }
     }
+    // std::cout << "Running method getTargetAgents() of class HMIState..." << std::endl;
     return targetAgents;
 }
 
@@ -128,7 +138,7 @@ void HMIState::sampleMovement(int numberOfTurns, std::set<HMIRandomAgent*> targe
             }
         }
     }
-    // std::cout << "Running method sampleMovement() of HMIState..." << std::endl;
+    // std::cout << "Completed method sampleMovement() of HMIState..." << std::endl;
 }
 
 VectorInt HMIState::toVector() {
