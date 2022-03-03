@@ -98,7 +98,11 @@ If no helper robot observes $$c_i$$ for random agent $$R_i$$ during the executio
 
 ### Reward Plugin
 
-The reward plugin maximally rewards the solver if all random agents have condition `0`, that is, if all random agents in the problem are happy. If there are unhappy random agents (ones that do not have condition `0`), then the solver is penalised depending on how many random agents are unhappy and how far the robot is away from these unhappy agents.
+The reward plugin given to the solver at the end of any action is `C * N(a : cond(a) = 0)`, where:
+- `C` is a constant (in the source code, it is currently 100); and
+- `N(a : cond(a) = 0)` is the number of random agents in the problem with observed condition 0.
+
+The value of `C` in the source code is given by the constant `BASE_REWARD` in the file `POMDP/plugins/HMIShared/HMIDataStructures.hpp`.
 
 ## Running the Simulation
 
