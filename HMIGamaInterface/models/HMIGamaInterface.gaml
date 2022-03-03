@@ -712,13 +712,15 @@ species helper_robot {
 	  * 
 	  * @param a the given random agent
 	  */
-	action help_agent(random_agent a) {
+	action help_agents {
 	 	write("Running help_agent() action of species helper_robot...");
-	 	ask a {
+	 	ask my_cell.dependents_in_cell {
 	 		left_alone <- true;
 	 		condition <- 0;
 	 	}
-	 	put a.condition key: a.name in: randag_conditions;
+	 	loop a over: my_cell.dependents_in_cell {
+	 	    put a.condition key: a.name in: randag_conditions;
+	 	}
 	 	write("Completed help_agent() action of species helper_robot...");
 	}
 	 
@@ -821,9 +823,6 @@ species helper_robot {
 	
 	action do_action(point<int> target_point) {
 		write "Target point is " + string(target_point);
-		loop a over: my_cell.dependents_in_cell {
-	 		do help_agent(a);
-	 	}
 		ask my_cell {
 	 		color <- #white;
 	 	}
@@ -870,6 +869,12 @@ species helper_robot {
 	 	my_cell <- grid_cell(path_to_follow at 0);
 	 	location <- my_cell.location;
 	 	path_to_follow <- copy_between(path_to_follow, 1, length(path_to_follow));
+	 	if (empty(path_to_follow)) {
+	 		ask my_cell.dependents_in_cell {
+	 			left_alone <- true;
+	 			condition <- 0;
+	 		}
+	 	}
 	 	// write("Completed execute_step() reflex of species helper_robot...");
 	 }
 	 

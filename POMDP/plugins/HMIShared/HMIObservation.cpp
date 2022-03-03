@@ -91,7 +91,7 @@ void HMIObservation::sampleMovement(int numTurns, std::vector<std::string> robot
                     }
                 }
             }
-            // for (hmi::HMIRandomAgent randomAgent : underlyingState_->getRandomAgents()) {
+            // for (hmi::HMIRandomAgent randomAgent : underlyingState_.getRandomAgents()) {
             //     if (randomAgent.getCoords() == robotCoords) {
             //         randomAgent.setCondition(0);
             //         observations_.at(randomAgent.getIdentifier()) = 0;
