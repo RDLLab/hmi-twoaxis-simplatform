@@ -821,6 +821,9 @@ species helper_robot {
 	
 	action do_action(point<int> target_point) {
 		write "Target point is " + string(target_point);
+		loop a over: my_cell.dependents_in_cell {
+	 		do help_agent(a);
+	 	}
 		ask my_cell {
 	 		color <- #white;
 	 	}
@@ -836,7 +839,9 @@ species helper_robot {
 	reflex take_action when: empty(path_to_follow) and has_key {
 	    // write("Running take_action() reflex of species helper_robot...");
 	 	has_key <- false;
-	 	if (has_observations) {do send_state_and_observation();}
+	 	if (has_observations) {
+	 		do send_state_and_observation();
+	 	}
 	 	// write("Helper robot is waiting for action...");
 	 	string action_str <- command("cat < " + path_to_gama);
 	 	action_str <- copy_between(action_str, 0, length(action_str) - 1);
@@ -868,15 +873,15 @@ species helper_robot {
 	 	// write("Completed execute_step() reflex of species helper_robot...");
 	 }
 	 
-	 reflex help_agent {
-	 	// write("Running help_agent() reflex of species helper_robot...");
-	 	loop r over: random_agent {
-	 		if (my_cell = r.my_cell) {
-	 			do help_agent(r);
-	 		}
-	 	}
-	 	// write("Completed help_agent() reflex of species helper_robot...");
-	 }
+//	 reflex help_agent {
+//	 	// write("Running help_agent() reflex of species helper_robot...");
+//	 	loop r over: random_agent {
+//	 		if (my_cell = r.my_cell) {
+//	 			do help_agent(r);
+//	 		}
+//	 	}
+//	 	// write("Completed help_agent() reflex of species helper_robot...");
+//	 }
 	 
 	 action shrink_and_justify(int num_randags) {
     	my_size <- size / reduction_factor;

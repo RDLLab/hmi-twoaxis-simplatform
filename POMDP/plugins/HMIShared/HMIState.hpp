@@ -60,14 +60,14 @@ public:
 
     std::vector<HMIRandomAgent> getRandomAgents();
 
-    std::set<HMIRandomAgent*> getTargetAgents(VectorFloat& actionVec);
+    std::set<std::string> getTargetAgents(VectorFloat& actionVec);
     
     /**
      * Samples movement for every random agent for a given number of turns.
      * 
      * @param numberOfTurns the number of turns for which to sample agent movement
     **/
-    void sampleMovement(int numberOfTurns, std::set<HMIRandomAgent*> targetAgents);
+    void sampleMovement(int numberOfTurns, std::set<std::string> targetAgents);
 
     /**
      * Returns a vector of integers representing the variable elements of this

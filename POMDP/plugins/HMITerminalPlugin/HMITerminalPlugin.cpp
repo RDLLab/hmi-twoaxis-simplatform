@@ -22,7 +22,7 @@ class HMITerminalPlugin: public TerminalPlugin {
         virtual ~HMITerminalPlugin() = default;
 
         virtual bool load(const std::string& optionsFile) override {
-            std::cout << "Running method load() in class HMITerminalPlugin...\n";
+            // std::cout << "Running method load() in class HMITerminalPlugin...\n";
             parseOptions_<HMITerminalOptions>(optionsFile);
             std::string gridPath
                 = static_cast<HMITerminalOptions*>(options_.get())->gridPath;
@@ -31,12 +31,12 @@ class HMITerminalPlugin: public TerminalPlugin {
             std::string randomAgentsPath
                 = static_cast<HMITerminalOptions*>(options_.get())->randomAgentsPath;
             randomAgents_ = hmi::instantiateTypesAndIDs(randomAgentsPath);
-            std::cout << "Completed method load() in class HMITerminalPlugin...\n";
+            // std::cout << "Completed method load() in class HMITerminalPlugin...\n";
             return true;
         }
 
         virtual ValidityReportSharedPtr isValid(const PropagationResultSharedPtr& propagationResult) override {
-            std::cout << "Running method isValid() in class HMITerminalPlugin...\n";
+            // std::cout << "Running method isValid() in class HMITerminalPlugin...\n";
             ValidityReportSharedPtr vr(new ValidityReport(propagationResult->nextState));
             VectorFloat stateVec = propagationResult->nextState->as<VectorState>()->asVector();
             hmi::HMIState hmiState(stateVec, randomAgents_, grid_);
@@ -63,12 +63,12 @@ class HMITerminalPlugin: public TerminalPlugin {
                     }
                 }
             }
-            std::cout << "Completed method isValid() in class HMITerminalPlugin...\n";
+            // std::cout << "Completed method isValid() in class HMITerminalPlugin...\n";
             return vr;
         }
 
         virtual bool isTerminal(const PropagationResultSharedPtr& propagationResult) override {
-            std::cout << "Running and completing method isTerminal() in class HMITerminalPlugin...\n";
+            // std::cout << "Running and completing method isTerminal() in class HMITerminalPlugin...\n";
             return false;
         }
 

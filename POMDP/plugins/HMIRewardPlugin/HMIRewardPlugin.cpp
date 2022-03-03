@@ -22,7 +22,7 @@ public:
     virtual ~HMIRewardPlugin() = default;
 
     virtual bool load(const std::string& optionsFile) override {
-        std::cout << "Running method load() in class HMIRewardPlugin...\n";
+        // std::cout << "Running method load() in class HMIRewardPlugin...\n";
         parseOptions_<HMIRewardOptions>(optionsFile);
         std::string gridPath
             = static_cast<HMIRewardOptions*>(options_.get())->gridPath;
@@ -30,12 +30,12 @@ public:
         std::string randomAgentsPath
             = static_cast<HMIRewardOptions*>(options_.get())->randomAgentsPath;
         randomAgents_ = hmi::instantiateTypesAndIDs(randomAgentsPath);
-        std::cout << "Completed method load() in class HMIRewardPlugin...\n";
+        // std::cout << "Completed method load() in class HMIRewardPlugin...\n";
         return true;
     }
 
     virtual FloatType getReward(const PropagationResultSharedPtr& propagationResult) const override {
-        std::cout << "Running method getReward() in class HMIRewardPlugin...\n";
+        // std::cout << "Running method getReward() in class HMIRewardPlugin...\n";
 
         // Extract data from propagated state.
         VectorFloat currentStateVector = propagationResult->nextState->as<VectorState>()->asVector();
@@ -57,12 +57,12 @@ public:
             reward += randomAgent.getCondition() == 0 ? hmi::BASE_REWARD : 0.0;
         }
         
-        std::cout << "Completed method getReward() in class HMIRewardPlugin...\n";
+        // std::cout << "Completed method getReward() in class HMIRewardPlugin...\n";
         return reward;
     }
 
     virtual std::pair<FloatType, FloatType> getMinMaxReward() const override {
-        std::cout << "Running and completing method getMinMaxReward() in class HMIRewardPlugin...\n";
+        // std::cout << "Running and completing method getMinMaxReward() in class HMIRewardPlugin...\n";
         return std::make_pair(hmi::MIN_REWARD, randomAgents_.size() * hmi::BASE_REWARD);
     }
 

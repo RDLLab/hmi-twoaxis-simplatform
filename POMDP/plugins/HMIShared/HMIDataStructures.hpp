@@ -48,7 +48,7 @@ struct Grid {
     **/
     Grid(std::string &gridDetails) {
 
-        std::cout << "Running constructor of Grid()..." << std::endl;
+        // std::cout << "Running constructor of Grid()..." << std::endl;
 
         // Set the width of the grid
         width_ = std::stoi(gridDetails);
@@ -67,7 +67,7 @@ struct Grid {
             grid_[i] = gridDetails.at(i) == '_';
         }
 
-        std::cout << "Completed constructor of Grid()..." << std::endl;
+        // std::cout << "Completed constructor of Grid()..." << std::endl;
     }
 
     int getWidth() const {

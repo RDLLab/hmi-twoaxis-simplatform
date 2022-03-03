@@ -28,7 +28,7 @@ public:
 
     virtual bool load(const std::string& optionsFile) override {
         // Set up the dependent agents as per robot environment.
-        std::cout << "Running method load() in class HMIHeuristicPlugin...\n";
+        // std::cout << "Running method load() in class HMIHeuristicPlugin...\n";
         parseOptions_<HMIHeuristicOptions>(optionsFile);
         std::string gridPath
             = static_cast<HMIHeuristicOptions*>(options_.get())->gridPath;
@@ -39,12 +39,12 @@ public:
         std::string transitionMatricesPath
             = static_cast<HMIHeuristicOptions*>(options_.get())->transitionMatrixPath;
         transitionMatrices_ = hmi::instantiateTransitionMatrices(transitionMatricesPath);
-        std::cout << "Completed method load() in class HMIHeuristicPlugin...\n";
+        // std::cout << "Completed method load() in class HMIHeuristicPlugin...\n";
         return true;
     }
 
     virtual FloatType getHeuristicValue(const HeuristicInfo* heuristicInfo) const override {
-        std::cout << "Running method getHeuristicValue() in class HMIHeuristicPlugin...\n";
+        // std::cout << "Running method getHeuristicValue() in class HMIHeuristicPlugin...\n";
         VectorFloat stateVec
             = heuristicInfo->currentState->as<VectorState>()->asVector();
         hmi::HMIState hmiState(stateVec, randomAgents_, transitionMatrices_, grid_);
@@ -88,7 +88,7 @@ public:
             closestRobot->setCoordinates(closestRandomAgent->getCoords());
             unhappyRandomAgents.erase(closestRandomAgent);
         }
-        std::cout << "Completed method getHeuristicValue() in class HMIHeuristicPlugin...\n";
+        // std::cout << "Completed method getHeuristicValue() in class HMIHeuristicPlugin...\n";
         return val;
     }
 

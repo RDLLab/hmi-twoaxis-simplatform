@@ -32,7 +32,7 @@ public:
 
     VectorInt toStateVector();
 
-    void sampleMovement(int numTurns, std::vector<std::string> robotMoves, std::set<HMIRandomAgent*> targetAgents);
+    void sampleMovement(int numTurns, std::vector<std::string> robotMoves, std::set<std::string> targetAgents);
 
 private:
 

@@ -106,15 +106,15 @@ std::vector<HMIRandomAgent> HMIState::getRandomAgents() {
     return randomAgents_;
 }
 
-std::set<HMIRandomAgent*> HMIState::getTargetAgents(VectorFloat& actionVec) {
+std::set<std::string> HMIState::getTargetAgents(VectorFloat& actionVec) {
     // std::cout << "Running method getTargetAgents() of class HMIState..." << std::endl;
-    std::set<HMIRandomAgent*> targetAgents;
+    std::set<std::string> targetAgents;
     for (size_t i = 0; i != actionVec.size(); i += 2) {
         int actionX = actionVec[i];
         int actionY = actionVec[i + 1];
         for (HMIRandomAgent randomAgent : randomAgents_) {
             if (randomAgent.getCoords().getX() == actionX && randomAgent.getCoords().getY() == actionY) {
-                targetAgents.insert(&randomAgent);
+                targetAgents.insert(randomAgent.getIdentifier());
             }
         }
     }
@@ -122,20 +122,12 @@ std::set<HMIRandomAgent*> HMIState::getTargetAgents(VectorFloat& actionVec) {
     return targetAgents;
 }
 
-void HMIState::sampleMovement(int numberOfTurns, std::set<HMIRandomAgent*> targetAgents) {
+void HMIState::sampleMovement(int numberOfTurns, std::set<std::string> targetAgents) {
     // std::cout << "Running method sampleMovement() of HMIState..." << std::endl;
     for (int t = 0; t < numberOfTurns; ++t) {
         for (HMIRandomAgent randAg : getRandomAgents()) {
-            if (targetAgents.empty())
-                randAg.sampleMovement(grid_);
-            else {
-                std::set<HMIRandomAgent*>::iterator randagIterator;
-                for (randagIterator = targetAgents.begin(); randagIterator != targetAgents.end(); ++randagIterator) {
-                    if (*randagIterator == &randAg) {
-                        randAg.sampleMovement(grid_);
-                    }
-                }
-            }
+            bool willMove = targetAgents.find(randAg.getIdentifier()) == targetAgents.end();
+            if (willMove) randAg.sampleMovement(grid_);
         }
     }
     // std::cout << "Completed method sampleMovement() of HMIState..." << std::endl;

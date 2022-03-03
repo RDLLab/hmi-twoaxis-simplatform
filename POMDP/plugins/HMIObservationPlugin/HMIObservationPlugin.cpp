@@ -28,7 +28,7 @@ public:
 
     virtual bool load(const std::string& optionsFile) override {
 
-        std::cout << "Running method load() in class HMIObservationPlugin...\n";
+        // std::cout << "Running method load() in class HMIObservationPlugin...\n";
         
         // Parse the options for this plugin.
         parseOptions_<HMIObservationPluginOptions>(optionsFile);
@@ -51,14 +51,14 @@ public:
             = static_cast<HMIObservationPluginOptions*>(options_.get())->transitionMatrixPath;
         transitionMatrices_ = hmi::instantiateTransitionMatrices(transitionMatricesPath);
         
-        std::cout << "Completed method load() in class HMIObservationPlugin...\n";
+        // std::cout << "Completed method load() in class HMIObservationPlugin...\n";
 
         return true;
     }
 
     virtual ObservationResultSharedPtr getObservation(const ObservationRequest* observationRequest) const override {
         
-        std::cout << "Running method getObservation() in class HMIObservationPlugin...\n";
+        // std::cout << "Running method getObservation() in class HMIObservationPlugin...\n";
         // Create the pointer that will store the result of the observation to be made.
         ObservationResultSharedPtr observationResult = std::make_shared<ObservationResult>();
 
@@ -71,7 +71,7 @@ public:
 
         // Determine what action will be made from the given data.
         VectorFloat actionVec = observationRequest->action->as<VectorAction>()->asVector();
-        std::set<hmi::HMIRandomAgent*> targetAgents = hmiObservation.getUnderlyingState().getTargetAgents(actionVec);
+        std::set<std::string> targetAgents = hmiObservation.getUnderlyingState().getTargetAgents(actionVec);
 
         std::vector<std::string> shortestPaths(hmiState.getRobots().size());
         int maxShortestPath = 0;
@@ -95,7 +95,7 @@ public:
         observationResult->observation = observation;
         observationResult->errorVector = observationRequest->errorVector;
 
-        std::cout << "Completed method getObservation() in class HMIObservationPlugin...\n";
+        // // std::cout << "Completed method getObservation() in class HMIObservationPlugin...\n";
 
         return observationResult;
     }

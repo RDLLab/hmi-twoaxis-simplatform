@@ -66,7 +66,7 @@ VectorInt HMIObservation::toStateVector() {
     return res;
 }
 
-void HMIObservation::sampleMovement(int numTurns, std::vector<std::string> robotMoves, std::set<HMIRandomAgent*> targetAgents) {
+void HMIObservation::sampleMovement(int numTurns, std::vector<std::string> robotMoves, std::set<std::string> targetAgents) {
     // std::cout << "Running method sampleMovement() in HMIObservation..." << std::endl;
     for (size_t i = 0; i < numTurns; ++i) {
         for (size_t j = 0; j < underlyingState_->getRobots().size(); ++j) {
@@ -79,13 +79,24 @@ void HMIObservation::sampleMovement(int numTurns, std::vector<std::string> robot
                 else if (path.at(0) == 'E') robot.setCoordinates(hmi::Coordinate(robotCoords.getX() + 1, robotCoords.getY()));
                 else                        robot.setCoordinates(hmi::Coordinate(robotCoords.getX() - 1, robotCoords.getY()));
                 robotMoves[j] = robotMoves[j].substr(1);
-            }
-            for (hmi::HMIRandomAgent randomAgent : underlyingState_->getRandomAgents()) {
-                if (randomAgent.getCoords() == robotCoords) {
-                    randomAgent.setCondition(0);
-                    observations_.at(randomAgent.getIdentifier()) = 0;
+                if (robotMoves[j].empty()) {
+                    for (HMIRandomAgent agent : underlyingState_->getRandomAgents()) {
+                        if (agent.getCoords().getX() == robot.getCoordinates().getX() &&
+                              agent.getCoords().getY() == robot.getCoordinates().getY())
+                            agent.setCondition(0);
+                            observations_.at(agent.getIdentifier()) = 0;
+                            if (targetAgents.find(agent.getIdentifier()) != targetAgents.end()) {
+                                targetAgents.erase(agent.getIdentifier());
+                            }
+                    }
                 }
-            }   
+            }
+            // for (hmi::HMIRandomAgent randomAgent : underlyingState_->getRandomAgents()) {
+            //     if (randomAgent.getCoords() == robotCoords) {
+            //         randomAgent.setCondition(0);
+            //         observations_.at(randomAgent.getIdentifier()) = 0;
+            //     }
+            // }   
         }
         underlyingState_->sampleMovement(1, targetAgents);
         makeObservations();
