@@ -121,6 +121,8 @@ global {
 	
 	int num_robots;
 	
+	bool help_only_target_agent;
+	
 	/** The base filepath for any images used in this simulation. */
 	string uri_base <- "../includes/";
 	
@@ -720,12 +722,14 @@ species helper_robot {
 	  */
 	action help_agents {
 	 	// write("Running help_agent() action of species helper_robot...");
-	 	loop a over: random_agent inside my_cell {
-	 		ask a {
-	 			left_alone <- true;
-	 			condition <- 0;
-	 		}
-	 	    put a.condition key: a.name in: randag_conditions;
+	 	loop a over: random_agent {
+	 		if (a.my_cell = my_cell) {
+	 		    ask a {
+	 			    left_alone <- true;
+	 			    condition <- 0;
+	 		    }
+	 	        put a.condition key: a.name in: randag_conditions;
+	 	    }
 	 	}
 	 	// write("Completed help_agent() action of species helper_robot...");
 	}
@@ -747,6 +751,10 @@ species helper_robot {
 	    }
 	 	//do look_for(r);
 	 	// write("Completed look_around() reflex of species helper_robot...");
+	}
+	
+	reflex help_agents when: !help_only_target_agent {
+		do help_agents();
 	}
 	 
 	 /**
@@ -886,16 +894,7 @@ species helper_robot {
 	 	path_to_follow <- copy_between(path_to_follow, 1, length(path_to_follow));
 	 	if (empty(path_to_follow)) {
 	 		write "Robot " + name + " has finished action!";
-	 		loop a over: random_agent {
-	 			if (a.my_cell = my_cell) {
-	 			    ask a {
-	 				    left_alone <- true;
-	 				    condition <- 0;
-	 				    write "Agent " + name + " now has condition " + string(condition);
-	 			    }
-	 			    put a.condition key: a.name in: randag_conditions;
-	 			}
-	 		}
+	 		if (help_only_target_agent) {do help_agents();}
 	 	}
 	 	// // write("Completed execute_step() reflex of species helper_robot...");
 	 }
@@ -976,4 +975,5 @@ experiment out type: gui {
 	parameter "Type and number of random agents" category: "Random agents" var: randag_map;
 	parameter "Location of each random agent" category: "Random agents" var: randag_locations;
 	parameter "Condition of each random agent" category: "Random agents" var: randag_conditions;
+	parameter "Help only target agent" category: "General" var: help_only_target_agent init: true;
 }
