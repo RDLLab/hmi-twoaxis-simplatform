@@ -4,13 +4,15 @@ namespace oppt {
 
 namespace hmi {
 
+ShortestPaths::ShortestPaths() : paths_() { }
+
 ShortestPaths::ShortestPaths(Grid &grid) {
     int size = grid.getWidth() * grid.getHeight();
     paths_ = std::vector<VectorString>(size, VectorString(size));
     computePaths(grid);
 }
 
-std::string ShortestPaths::getPath(int from, int to) {
+std::string ShortestPaths::getPath(int from, int to) const {
     return paths_[from][to];
 }
 

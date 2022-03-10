@@ -2,6 +2,7 @@
 #include "oppt/opptCore/Distribution.hpp"
 #include "HMIObservationPluginOptions.hpp"
 #include "plugins/HMIShared/HMIObservation.hpp"
+#include "plugins/HMIShared/ShortestPaths.hpp"
 
 #include <string>
 #include <array>
@@ -38,6 +39,7 @@ public:
         std::string gridPath
             = static_cast<HMIObservationPluginOptions*>(options_.get())->gridPath;
         grid_ = hmi::instantiateGrid(gridPath);
+        shortestPaths_ = hmi::ShortestPaths(grid_);
 
         // Extract random agent data for the current problem and enrich it into
         // a richer data structure.
@@ -77,13 +79,11 @@ public:
         int maxShortestPath = 0;
         for (size_t i = 0; i != hmiState.getRobots().size(); ++i) {
             hmi::HMIRobot robot = hmiState.getRobots()[i];
-            int robotX = robot.getCoordinates().getX();
-            int robotY = robot.getCoordinates().getY();
-            int actionX = (int) actionVec[2*i];
-            int actionY = (int) actionVec[2*i + 1];
-            std::pair<int, std::string> path = hmi::getShortestPath(grid_, robotX, robotY, actionX, actionY);
-            shortestPaths[i] = path.second;
-            maxShortestPath = std::max(path.first, maxShortestPath);
+            hmi::Coordinate robotCoordinates = robot.getCoordinates();
+            hmi::Coordinate actionCoordinates((int) actionVec[2*i], (int) actionVec[2*i + 1]);
+            std::string path = shortestPaths_.getPath(robotCoordinates.toPosition(grid_), actionCoordinates.toPosition(grid_));
+            shortestPaths[i] = path;
+            maxShortestPath = std::max((int) path.size(), maxShortestPath);
         }
 
         hmiObservation.sampleMovement(maxShortestPath, shortestPaths, targetAgents);
@@ -104,6 +104,7 @@ private:
     std::vector<hmi::TypeAndId> randomAgents_;
     hmi::Grid grid_;
     std::unordered_map<std::string, hmi::TransitionMatrix> transitionMatrices_;
+    hmi::ShortestPaths shortestPaths_;
 };
 
 OPPT_REGISTER_OBSERVATION_PLUGIN(HMIObservationPlugin)

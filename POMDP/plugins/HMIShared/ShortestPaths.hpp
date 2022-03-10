@@ -12,9 +12,11 @@ class ShortestPaths {
 
     public:
 
+    ShortestPaths();
+
     ShortestPaths(Grid &grid);
 
-    std::string getPath(int from, int to);
+    std::string getPath(int from, int to) const;
 
     private:
 
