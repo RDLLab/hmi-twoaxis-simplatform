@@ -18,12 +18,11 @@ class ShortestPaths {
 
     private:
 
-    Grid* grid_;
     std::vector<VectorString> paths_;
 
     private:
 
-    void computePaths();
+    void computePaths(Grid &grid);
 
 };
 }
