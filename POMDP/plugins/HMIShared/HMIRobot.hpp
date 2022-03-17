@@ -18,6 +18,10 @@ public:
 
     void setCoordinates(Coordinate coordinate);
 
+    void sampleMovement(Coordinate move);
+
+    void makeMove(char direction);
+
 private:
     Coordinate coordinates_;
 

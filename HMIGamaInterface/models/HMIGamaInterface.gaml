@@ -252,6 +252,10 @@ global {
 		// write "Completed method refresh_pipes() of species world...";
 	}
 	
+	reflex pause when: empty(helper_robot[0].path_to_follow) {
+		do pause();
+	}
+	
 	/**
 	 * Initialises the problem grid. This is done by reading a string
 	 * containing instances of "_" (for traversable cells) and "*" (for

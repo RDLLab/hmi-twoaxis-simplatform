@@ -53,9 +53,8 @@ public:
         VectorFloat actionVec = propagationRequest->action->as<VectorAction>()->asVector();
         VectorFloat resultingState(propagationRequest->currentState->as<VectorState>()->asVector());
         hmi::HMIState currentState(resultingState, randomAgents_, transitionMatrices_, grid_);
-        hmi::HMIObservation observation(currentState);
 
-        std::set<std::string> targetAgents = observation.getUnderlyingState().getTargetAgents(actionVec);
+        std::set<std::string> targetAgents = currentState.getTargetAgents(actionVec);
 
         std::vector<std::string> shortestPaths(currentState.getRobots().size());
         int maxShortestPath = 0;
@@ -70,9 +69,17 @@ public:
             maxShortestPath = std::max((int) path.size(), maxShortestPath);
         }
 
-        observation.sampleMovement(maxShortestPath, shortestPaths, targetAgents);
+        for (size_t i = 0; i != maxShortestPath; ++i) {
+            currentState.sampleMovement(1, targetAgents);
+            for (size_t j = 0; j != currentState.getRobots().size(); ++j) {
+                if (!shortestPaths[i].empty()) {
+                    currentState.getRobots()[i].makeMove(shortestPaths[i].at(0));
+                    shortestPaths[i] = shortestPaths[i].substr(1);
+                }
+            }
+        }
 
-        VectorInt outState = observation.toStateVector();
+        VectorInt outState = currentState.toVector();
         propagationResult->previousState = propagationRequest->currentState.get();
 
         VectorFloat floatOutState(outState.begin(), outState.end());
