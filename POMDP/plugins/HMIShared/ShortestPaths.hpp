@@ -18,9 +18,12 @@ class ShortestPaths {
 
     std::string getPath(int from, int to) const;
 
+    int getLongestPath() const;
+
     private:
 
     std::vector<VectorString> paths_;
+    int longestPath_;
 
     private:
 
