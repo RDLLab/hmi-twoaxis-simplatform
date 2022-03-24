@@ -4,7 +4,7 @@ namespace oppt {
 
 namespace hmi {
 
-ShortestPaths::ShortestPaths() : paths_() { }
+ShortestPaths::ShortestPaths() : paths_(), longestPath_(0) { }
 
 ShortestPaths::ShortestPaths(Grid &grid) {
     int size = grid.getWidth() * grid.getHeight();

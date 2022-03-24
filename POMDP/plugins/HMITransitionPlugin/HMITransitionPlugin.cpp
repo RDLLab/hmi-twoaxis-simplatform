@@ -48,7 +48,6 @@ public:
     }
 
     virtual PropagationResultSharedPtr propagateState(const PropagationRequest* propagationRequest) const override {
-        // // std::cout << "Running method propagateState() in class HMITransitionPlugin...\n";
         PropagationResultSharedPtr propagationResult(new PropagationResult());
         VectorFloat actionVec = propagationRequest->action->as<VectorAction>()->asVector();
         VectorFloat resultingState(propagationRequest->currentState->as<VectorState>()->asVector());
@@ -68,23 +67,20 @@ public:
             shortestPaths[i] = path;
             maxShortestPath = std::max((int) path.size(), maxShortestPath);
         }
-
         for (size_t i = 0; i != maxShortestPath; ++i) {
             currentState.sampleMovement(1, targetAgents);
             for (size_t j = 0; j != currentState.getRobots().size(); ++j) {
-                if (!shortestPaths[i].empty()) {
-                    currentState.getRobots()[i].makeMove(shortestPaths[i].at(0));
-                    shortestPaths[i] = shortestPaths[i].substr(1);
+                if (!shortestPaths[j].empty()) {
+                    currentState.getRobots()[j].makeMove(shortestPaths[j].at(0));
+                    shortestPaths[j] = shortestPaths[j].substr(1);
                 }
             }
         }
-
         VectorInt outState = currentState.toVector();
         propagationResult->previousState = propagationRequest->currentState.get();
 
         VectorFloat floatOutState(outState.begin(), outState.end());
         propagationResult->nextState = std::make_shared<oppt::VectorState>(floatOutState);
-        // // std::cout << "Completed method propagateState() in class HMITransitionPlugin...\n";
         return propagationResult;
     }
 

@@ -38,7 +38,6 @@ public:
     }
 
     virtual FloatType getReward(const PropagationResultSharedPtr& propagationResult) const override {
-        // std::cout << "Running method getReward() in class HMIRewardPlugin...\n";
 
         // Extract data from propagated state.
         VectorFloat previousStateVector = propagationResult->previousState->as<VectorState>()->asVector();
@@ -61,16 +60,14 @@ public:
         }
 
         for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
-            reward += randomAgent.getCondition() == 0 ? (shortestPaths_.getLongestPath() - maxActionSize) : 0.0;
+            reward += randomAgent.getCondition() == 0 ? (hmi::BASE_REWARD / maxActionSize) : 0.0;
         }
-        
-        // std::cout << "Completed method getReward() in class HMIRewardPlugin...\n";
         return reward;
     }
 
     virtual std::pair<FloatType, FloatType> getMinMaxReward() const override {
         // std::cout << "Running and completing method getMinMaxReward() in class HMIRewardPlugin...\n";
-        return std::make_pair(hmi::MIN_REWARD, randomAgents_.size() * hmi::BASE_REWARD);
+        return std::make_pair(hmi::MIN_REWARD, randomAgents_.size() * (shortestPaths_.getLongestPath() - 1));
     }
 
 
