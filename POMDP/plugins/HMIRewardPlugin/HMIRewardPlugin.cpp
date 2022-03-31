@@ -56,18 +56,24 @@ public:
             hmi::Coordinate start((int) previousStateVector[i], (int) previousStateVector[i+1]);
             bool invalidCell = !currentState.getGrid().getGrid()[action.toPosition(currentState.getGrid())];
             if (invalidCell) return hmi::MIN_REWARD;
-            maxActionSize = std::max((int) shortestPaths_.getPath(start.toPosition(grid_), action.toPosition(grid_)).size(), maxActionSize);
+            for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
+                if (randomAgent.getCoords() == action) {
+                    reward += hmi::BASE_REWARD;
+                }
+            }
+            int pathCost = (int) shortestPaths_.getPath(start.toPosition(grid_), action.toPosition(grid_)).size();
+            reward -= pathCost;
         }
 
         for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
-            reward += randomAgent.getCondition() == 0 ? (hmi::BASE_REWARD / maxActionSize) : 0.0;
+            if (randomAgent.getCondition() > 0) reward -= hmi::BASE_REWARD;
         }
         return reward;
     }
 
     virtual std::pair<FloatType, FloatType> getMinMaxReward() const override {
         // std::cout << "Running and completing method getMinMaxReward() in class HMIRewardPlugin...\n";
-        return std::make_pair(hmi::MIN_REWARD, randomAgents_.size() * (shortestPaths_.getLongestPath() - 1));
+        return std::make_pair(hmi::MIN_REWARD, randomAgents_.size() * (hmi::BASE_REWARD - 1));
     }
 
 

@@ -23,7 +23,7 @@ namespace oppt
 namespace hmi
 {
     
-const FloatType BASE_REWARD = 100.0;
+const FloatType BASE_REWARD = 50.0;
 const FloatType MAX_REWARD = 10000.0;
 const FloatType MIN_REWARD = -1000000000.0;
 
