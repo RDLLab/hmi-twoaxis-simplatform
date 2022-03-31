@@ -51,23 +51,29 @@ public:
         FloatType reward = 0.0;
         int maxActionSize = 0;
 
-        for (size_t i = 0; i != actionVec.size(); i += 2) {
-            hmi::Coordinate action((int) actionVec[i], (int) actionVec[i+1]);
-            hmi::Coordinate start((int) previousStateVector[i], (int) previousStateVector[i+1]);
-            bool invalidCell = !currentState.getGrid().getGrid()[action.toPosition(currentState.getGrid())];
-            if (invalidCell) return hmi::MIN_REWARD;
-            for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
-                if (randomAgent.getCoords() == action) {
+        for (hmi::HMIRandomAgent randAgent : currentState.getRandomAgents()) {
+            for (size_t i = 0; i != actionVec.size(); i += 2) {
+                hmi::Coordinate action((int) actionVec[i], (int) actionVec[i+1]);
+                if (randAgent.getCoords() == action) {
                     reward += hmi::BASE_REWARD;
+                    break;
                 }
             }
+        }
+
+        for (size_t i = 0; i != actionVec.size(); i += 2) {
+            hmi::HMIRobot robot = currentState.getRobots()[i / 2];
+            hmi::Coordinate start = robot.getCoordinates();
+            hmi::Coordinate action((int) actionVec[i], (int) actionVec[i+1]);
+            bool invalidCell = !currentState.getGrid().getGrid()[action.toPosition(currentState.getGrid())];
+            if (invalidCell) return hmi::MIN_REWARD;
             int pathCost = (int) shortestPaths_.getPath(start.toPosition(grid_), action.toPosition(grid_)).size();
             reward -= pathCost;
         }
 
-        for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
-            if (randomAgent.getCondition() > 0) reward -= hmi::BASE_REWARD;
-        }
+        // for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
+        //     if (randomAgent.getCondition() > 0) reward -= hmi::BASE_REWARD;
+        // }
         return reward;
     }
 
