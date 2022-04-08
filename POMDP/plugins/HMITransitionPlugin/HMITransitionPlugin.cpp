@@ -80,6 +80,7 @@ public:
         propagationResult->previousState = propagationRequest->currentState.get();
 
         VectorFloat floatOutState(outState.begin(), outState.end());
+        propagationResult->action = propagationResult->action;
         propagationResult->nextState = std::make_shared<oppt::VectorState>(floatOutState);
         return propagationResult;
     }
