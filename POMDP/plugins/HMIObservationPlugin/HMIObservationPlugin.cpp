@@ -72,6 +72,8 @@ public:
         hmi::HMIObservation hmiObservation(hmiState);
 
         // Determine what action will be made from the given data.
+        observationResult->state = observationRequest->currentState.get();
+        observationResult->action = observationRequest->action;
         VectorFloat actionVec = observationRequest->action->as<VectorAction>()->asVector();
         std::set<std::string> targetAgents = hmiObservation.getUnderlyingState().getTargetAgents(actionVec);
 
