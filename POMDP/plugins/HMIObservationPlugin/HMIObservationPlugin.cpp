@@ -52,6 +52,9 @@ public:
         std::string transitionMatricesPath
             = static_cast<HMIObservationPluginOptions*>(options_.get())->transitionMatrixPath;
         transitionMatrices_ = hmi::instantiateTransitionMatrices(transitionMatricesPath);
+
+        std::string randId = randomAgents_[0].first;
+        numConditions_ = transitionMatrices_.at(randId).numConditions_;
         
         // std::cout << "Completed method load() in class HMIObservationPlugin...\n";
 
@@ -69,7 +72,7 @@ public:
         hmi::HMIState hmiState(stateVec, randomAgents_, transitionMatrices_, grid_);
 
         // Initialise the observation data.
-        hmi::HMIObservation hmiObservation(hmiState);
+        hmi::HMIObservation hmiObservation(hmiState, numConditions_);
 
         // Determine what action will be made from the given data.
         observationResult->state = observationRequest->currentState.get();
@@ -97,7 +100,7 @@ public:
         observationResult->observation = observation;
         observationResult->errorVector = observationRequest->errorVector;
 
-        // // std::cout << "Completed method getObservation() in class HMIObservationPlugin...\n";
+        // std::cout << "Completed method getObservation() in class HMIObservationPlugin...\n";
 
         return observationResult;
     }
@@ -107,6 +110,7 @@ private:
     hmi::Grid grid_;
     std::unordered_map<std::string, hmi::TransitionMatrix> transitionMatrices_;
     hmi::ShortestPaths shortestPaths_;
+    int numConditions_;
 };
 
 OPPT_REGISTER_OBSERVATION_PLUGIN(HMIObservationPlugin)

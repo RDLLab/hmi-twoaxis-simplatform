@@ -20,7 +20,7 @@ class HMIObservation
 
 public:
 
-    HMIObservation(HMIState &currentState);
+    HMIObservation(HMIState &currentState, int numConditions);
 
     HMIState getUnderlyingState();
 

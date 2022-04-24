@@ -6,10 +6,14 @@ namespace oppt
 namespace hmi
 {
 
-HMIObservation::HMIObservation(HMIState &currentState) {
+HMIObservation::HMIObservation(HMIState &currentState, int numConditions) {
+    // std::cout << "Constructing HMIObservation with " << std::to_string(numConditions) << "..." << std::endl;
     underlyingState_ = &currentState;
+    unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+    std::default_random_engine generator(seed1);
+    std::uniform_int_distribution<int> distribution(0, numConditions);
     for (HMIRandomAgent randomAgent : underlyingState_->getRandomAgents()) {
-        observations_.insert(std::make_pair(randomAgent.getIdentifier(), -1));
+        observations_.insert(std::make_pair(randomAgent.getIdentifier(), distribution(generator)));
         originalConditions_.push_back(randomAgent.getCondition());
     }
 }
@@ -24,7 +28,7 @@ std::unordered_map<std::string, int> HMIObservation::getObservations() {
 
 void HMIObservation::makeObservations() {
 
-    // std::cout << "Running method makeObservations() in HMIObservation..." << std::endl;
+    // // std::cout << "Running method makeObservations() in HMIObservation..." << std::endl;
 
     for (HMIRandomAgent randomAgent : underlyingState_->getRandomAgents()) {
 
@@ -33,22 +37,22 @@ void HMIObservation::makeObservations() {
         if (testConditionProbability())
             observations_.at(randomAgent.getIdentifier()) = randomAgent.getCondition();
     }
-    // std::cout << "Completed method makeObservations() in HMIObservation..." << std::endl;
+    // // std::cout << "Completed method makeObservations() in HMIObservation..." << std::endl;
 }
 
 VectorInt HMIObservation::toVector() {
-    // std::cout << "Running method toVector() in HMIObservation..." << std::endl;
+    // // std::cout << "Running method toVector() in HMIObservation..." << std::endl;
     size_t numRandomAgents = getUnderlyingState().getRandomAgents().size();
     VectorInt res(numRandomAgents);
     for (size_t i = 0; i < numRandomAgents; ++i) {
         res[i] = observations_.at(getUnderlyingState().getRandomAgents()[i].getIdentifier());
     }
-    // std::cout << "Completed method toVector() in HMIObservation..." << std::endl;
+    // // std::cout << "Completed method toVector() in HMIObservation..." << std::endl;
     return res;
 }
 
 VectorInt HMIObservation::toStateVector() {
-    // std::cout << "Running method toStateVector() in HMIObservation..." << std::endl;
+    // // std::cout << "Running method toStateVector() in HMIObservation..." << std::endl;
     VectorInt res(underlyingState_->toVector());
     size_t numRobots = underlyingState_->getRobots().size() * HMIState::ROBOT_ELEMENTS;
     size_t numRandags = underlyingState_->getRandomAgents().size();
@@ -62,12 +66,12 @@ VectorInt HMIObservation::toStateVector() {
             res[idx + 2] = observations_.at(randomAgent.getIdentifier());
         }
     }
-    // std::cout << "Completed method toStateVector() in HMIObservation..." << std::endl;
+    // // std::cout << "Completed method toStateVector() in HMIObservation..." << std::endl;
     return res;
 }
 
 void HMIObservation::sampleMovement(int numTurns, std::vector<std::string> robotMoves, std::set<std::string> targetAgents) {
-    // std::cout << "Running method sampleMovement() in HMIObservation..." << std::endl;
+    // // std::cout << "Running method sampleMovement() in HMIObservation..." << std::endl;
     for (size_t i = 0; i < numTurns; ++i) {
         for (size_t j = 0; j < underlyingState_->getRobots().size(); ++j) {
             hmi::HMIRobot robot = underlyingState_->getRobots()[j];
@@ -101,7 +105,7 @@ void HMIObservation::sampleMovement(int numTurns, std::vector<std::string> robot
         underlyingState_->sampleMovement(1, targetAgents);
         makeObservations();
     }
-    // std::cout << "Completed method sampleMovement() in HMIObservation..." << std::endl;
+    // // std::cout << "Completed method sampleMovement() in HMIObservation..." << std::endl;
 }
 
 bool HMIObservation::canSeeCondition(Coordinate start, Coordinate dest) {
@@ -150,10 +154,10 @@ bool HMIObservation::canSeeCondition(Coordinate start, Coordinate dest) {
 }
 
 bool HMIObservation::testConditionProbability() {
-    // std::cout << "Running method testConditionProbability() in HMIObservation..." << std::endl;
+    // // std::cout << "Running method testConditionProbability() in HMIObservation..." << std::endl;
     RandomEngine randEng;
     std::uniform_real_distribution<float> sightDistribution(0.0, 1.0);
-    // std::cout << "Completed method testConditionProbability() in HMIObservation..." << std::endl;
+    // // std::cout << "Completed method testConditionProbability() in HMIObservation..." << std::endl;
     return sightDistribution(randEng) <= 0.8;
 }
 

@@ -24,7 +24,7 @@ public:
     virtual ~HMIRewardPlugin() = default;
 
     virtual bool load(const std::string& optionsFile) override {
-        // std::cout << "Running method load() in class HMIRewardPlugin...\n";
+        // // std::cout << "Running method load() in class HMIRewardPlugin...\n";
         parseOptions_<HMIRewardOptions>(optionsFile);
         std::string gridPath
             = static_cast<HMIRewardOptions*>(options_.get())->gridPath;
@@ -33,11 +33,13 @@ public:
         std::string randomAgentsPath
             = static_cast<HMIRewardOptions*>(options_.get())->randomAgentsPath;
         randomAgents_ = hmi::instantiateTypesAndIDs(randomAgentsPath);
-        // std::cout << "Completed method load() in class HMIRewardPlugin...\n";
+        // // std::cout << "Completed method load() in class HMIRewardPlugin...\n";
         return true;
     }
 
     virtual FloatType getReward(const PropagationResultSharedPtr& propagationResult) const override {
+
+        // std::cout << "Running getReward() in HMIRewardPlugin..." << std::endl;
 
         // Extract data from propagated state.
         VectorFloat previousStateVector = propagationResult->previousState->as<VectorState>()->asVector();
@@ -54,7 +56,8 @@ public:
         for (hmi::HMIRandomAgent randAgent : currentState.getRandomAgents()) {
             for (size_t i = 0; i != actionVec.size(); i += 2) {
                 hmi::Coordinate action((int) actionVec[i], (int) actionVec[i+1]);
-                if (randAgent.getCoords() == action) {
+                if (randAgent.getCoords().getX() == action.getX() && randAgent.getCoords().getY() == action.getY()) {
+                    //std::cout << "Random agent at " << action.getX() << "," << action.getY() << "gives reward of " << hmi::BASE_REWARD << std::endl;
                     reward += hmi::BASE_REWARD;
                     break;
                 }
@@ -66,20 +69,24 @@ public:
             hmi::Coordinate start = robot.getCoordinates();
             hmi::Coordinate action((int) actionVec[i], (int) actionVec[i+1]);
             bool invalidCell = !currentState.getGrid().getGrid()[action.toPosition(currentState.getGrid())];
-            if (invalidCell) return hmi::MIN_REWARD;
+            if (invalidCell) {
+                // std::cout << "Completing getReward() in HMIRewardPlugin..." << std::endl;
+                return hmi::MIN_REWARD;
+            }
             int pathCost = (int) shortestPaths_.getPath(start.toPosition(grid_), action.toPosition(grid_)).size();
-            reward -= pathCost;
+            //reward -= pathCost;
         }
 
         // for (hmi::HMIRandomAgent randomAgent : currentState.getRandomAgents()) {
         //     if (randomAgent.getCondition() > 0) reward -= hmi::BASE_REWARD;
         // }
+        //// std::cout << "Completing getReward() in HMIRewardPlugin..." << std::endl;
         return reward;
     }
 
     virtual std::pair<FloatType, FloatType> getMinMaxReward() const override {
         // std::cout << "Running and completing method getMinMaxReward() in class HMIRewardPlugin...\n";
-        return std::make_pair(hmi::MIN_REWARD, randomAgents_.size() * (hmi::BASE_REWARD - 1));
+        return std::make_pair(hmi::MIN_REWARD, randomAgents_.size() * (hmi::BASE_REWARD));
     }
 
 

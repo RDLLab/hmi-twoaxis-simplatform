@@ -27,14 +27,14 @@ public:
     virtual ~HMIObservationExecutionPlugin() = default;
 
     virtual bool load(const std::string &optionsFile) override {
-        // std::cout << "Running method load() in HMIObservationExecutionPlugin..." << std::endl;
+        // // std::cout << "Running method load() in HMIObservationExecutionPlugin..." << std::endl;
         parseOptions_<HMIObservationExecutionPluginOptions>(optionsFile);
         pipePathToGama_ = static_cast<HMIObservationExecutionPluginOptions*>(options_.get())->pipePathToGama;
         pipePathToSolver_ = static_cast<HMIObservationExecutionPluginOptions*>(options_.get())->pipePathToSolver;
         std::string randomAgentsPath
           = static_cast<HMIObservationExecutionPluginOptions*>(options_.get())->randomAgentsPath;
         randomAgents_ = hmi::instantiateTypesAndIDs(randomAgentsPath);
-        // std::cout << "Completed method load() in HMIObservationExecutionPlugin..." << std::endl;
+        // // std::cout << "Completed method load() in HMIObservationExecutionPlugin..." << std::endl;
         return true;
     }
 

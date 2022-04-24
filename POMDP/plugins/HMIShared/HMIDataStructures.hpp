@@ -48,7 +48,7 @@ struct Grid {
     **/
     Grid(std::string &gridDetails) {
 
-        // std::cout << "Running constructor of Grid()..." << std::endl;
+        // // std::cout << "Running constructor of Grid()..." << std::endl;
 
         // Set the width of the grid
         width_ = std::stoi(gridDetails);
@@ -67,7 +67,7 @@ struct Grid {
             grid_[i] = gridDetails.at(i) == '_';
         }
 
-        // std::cout << "Completed constructor of Grid()..." << std::endl;
+        // // std::cout << "Completed constructor of Grid()..." << std::endl;
     }
 
     int getWidth() const {
@@ -162,6 +162,8 @@ struct TransitionMatrix {
     // toddlers, elderly people, etc.
     std::string type_;
 
+    int numConditions_;
+
     /**
      * Constructor for the transition matrix struct. It takes a string representation
      * and enriches it to be a data structure that is easier to understand and use.
@@ -173,7 +175,9 @@ struct TransitionMatrix {
      * @param matrixDetails      the string representation of this transition matrix
     **/
     TransitionMatrix(int numberOfConditions, std::string &matrixDetails) {
-        // std::cout << "Individual matrix details are " << matrixDetails << std::endl;
+        // std::cout << "Instantiating transition matrix..." << std::endl;
+        // // std::cout << "Individual matrix details are " << matrixDetails << std::endl;
+        numConditions_ = numberOfConditions;
 
         // Define to what type of random agent this transition matrix applies
         type_ = matrixDetails.substr(0, matrixDetails.find(","));
@@ -191,6 +195,7 @@ struct TransitionMatrix {
                 matrixDetails = matrixDetails.substr(matrixDetails.find(",") + 1);
             }
         }
+        // std::cout << "Completed instantiating transition matrix..." << std::endl;
     }
 
     TransitionMatrix() : type_(""), matrix_() { }

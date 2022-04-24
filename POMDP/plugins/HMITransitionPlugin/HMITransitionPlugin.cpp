@@ -30,7 +30,7 @@ public:
     virtual ~HMITransitionPlugin() = default;
 
     virtual bool load(const std::string &optionsFile) override {
-        // // std::cout << "Running method load() in class HMITransitionPlugin...\n";
+        // std::cout << "Running method load() in class HMITransitionPlugin...\n";
         parseOptions_<HMITransitionPluginOptions>(optionsFile);
         std::string gridPath
           = static_cast<HMITransitionPluginOptions*>(options_.get())->gridPath;
@@ -42,14 +42,16 @@ public:
         std::string transitionMatricesPath
             = static_cast<HMITransitionPluginOptions*>(options_.get())->transitionMatrixPath;
         transitionMatrices_ = hmi::instantiateTransitionMatrices(transitionMatricesPath);
-        // // std::cout << "Completed method load() in class HMITransitionPlugin...\n";
+        // std::cout << "Completed method load() in class HMITransitionPlugin...\n";
 
         return true;
     }
 
     virtual PropagationResultSharedPtr propagateState(const PropagationRequest* propagationRequest) const override {
+        // std::cout << "Running HMITransitionPlugin.propagateState()..." << std::endl;
         PropagationResultSharedPtr propagationResult(new PropagationResult());
         VectorFloat actionVec = propagationRequest->action->as<VectorAction>()->asVector();
+        //std::cout << "Action is (" << actionVec[0] << "," << actionVec[1] << ")" << std::endl;
         VectorFloat resultingState(propagationRequest->currentState->as<VectorState>()->asVector());
         hmi::HMIState currentState(resultingState, randomAgents_, transitionMatrices_, grid_);
 
@@ -62,8 +64,8 @@ public:
             hmi::Coordinate robotCoords = robot.getCoordinates();
             hmi::Coordinate actionCoords((int) actionVec[2*i], (int) actionVec[2*i + 1]);
             std::string path = shortestPaths_.getPath(robotCoords.toPosition(grid_), actionCoords.toPosition(grid_));
-            // std::cout << "From (" << robotX << "," << robotY << ") to (" << actionX << "," << actionY << "):" << std::endl;
-            // std::cout << "Shortest distance is " << path.first << std::endl;
+            // // std::cout << "From (" << robotX << "," << robotY << ") to (" << actionX << "," << actionY << "):" << std::endl;
+            // // std::cout << "Shortest distance is " << path.first << std::endl;
             shortestPaths[i] = path;
             maxShortestPath = std::max((int) path.size(), maxShortestPath);
         }
@@ -80,8 +82,8 @@ public:
         propagationResult->previousState = propagationRequest->currentState.get();
 
         VectorFloat floatOutState(outState.begin(), outState.end());
-        propagationResult->action = propagationResult->action;
         propagationResult->nextState = std::make_shared<oppt::VectorState>(floatOutState);
+        // std::cout << "Completed HMITransitionPlugin.propagateState()..." << std::endl;
         return propagationResult;
     }
 
