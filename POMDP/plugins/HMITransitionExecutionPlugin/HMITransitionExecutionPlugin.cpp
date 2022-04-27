@@ -71,6 +71,7 @@ public:
         }
 
         propagationResult->previousState = propagationRequest->currentState.get();
+        propagationResult->action = propagationRequest->action;
         propagationResult->nextState = std::make_shared<oppt::VectorState>(nextState);
 
         // std::cout << "Completed method propagateState() in HMITransitionExecutionPlugin..." << std::endl;

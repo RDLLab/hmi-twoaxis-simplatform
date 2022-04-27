@@ -24,7 +24,6 @@ public:
 
 private:
     Coordinate coordinates_;
-
 };
 
 }

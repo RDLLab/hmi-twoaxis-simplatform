@@ -52,37 +52,44 @@ public:
         PropagationResultSharedPtr propagationResult(new PropagationResult());
         VectorFloat actionVec = propagationRequest->action->as<VectorAction>()->asVector();
         //std::cout << "Action is (" << actionVec[0] << "," << actionVec[1] << ")" << std::endl;
-        VectorFloat resultingState(propagationRequest->currentState->as<VectorState>()->asVector());
-        hmi::HMIState currentState(resultingState, randomAgents_, transitionMatrices_, grid_);
+        VectorFloat stateVec(propagationRequest->currentState->as<VectorState>()->asVector());
+        hmi::HMIState currentState(stateVec, randomAgents_, transitionMatrices_, grid_);
+        VectorFloat outState(stateVec.size(), -1);
 
-        std::set<std::string> targetAgents = currentState.getTargetAgents(actionVec);
-
-        std::vector<std::string> shortestPaths(currentState.getRobots().size());
-        int maxShortestPath = 0;
-        for (size_t i = 0; i != currentState.getRobots().size(); ++i) {
-            hmi::HMIRobot robot = currentState.getRobots()[i];
-            hmi::Coordinate robotCoords = robot.getCoordinates();
-            hmi::Coordinate actionCoords((int) actionVec[2*i], (int) actionVec[2*i + 1]);
-            std::string path = shortestPaths_.getPath(robotCoords.toPosition(grid_), actionCoords.toPosition(grid_));
-            // // std::cout << "From (" << robotX << "," << robotY << ") to (" << actionX << "," << actionY << "):" << std::endl;
-            // // std::cout << "Shortest distance is " << path.first << std::endl;
-            shortestPaths[i] = path;
-            maxShortestPath = std::max((int) path.size(), maxShortestPath);
-        }
-        for (size_t i = 0; i != maxShortestPath; ++i) {
-            currentState.sampleMovement(1, targetAgents);
-            for (size_t j = 0; j != currentState.getRobots().size(); ++j) {
-                if (!shortestPaths[j].empty()) {
-                    currentState.getRobots()[j].makeMove(shortestPaths[j].at(0));
-                    shortestPaths[j] = shortestPaths[j].substr(1);
+        // Process actions and any random agents helped by those actions
+        for (size_t i = 0; i != actionVec.size(); i += 2) {
+            // The i-th robot's x-coordinate in s'
+            outState[i] = actionVec[i];
+            // The i-th robot's y-coordinate in s'
+            outState[i+1] = actionVec[i+1];
+            for (size_t j = actionVec.size(); j != stateVec.size(); j += 3) {
+                bool sameX = stateVec[j] == actionVec[i];
+                bool sameY = stateVec[j+1] == actionVec[i+1];
+                // Helper robot is moving towards random agent's location
+                if (sameX && sameY) {
+                    outState[j] = stateVec[j];
+                    outState[j+1] = stateVec[j+1];
+                    outState[j+2] = 0;
                 }
             }
         }
-        VectorInt outState = currentState.toVector();
-        propagationResult->previousState = propagationRequest->currentState.get();
 
-        VectorFloat floatOutState(outState.begin(), outState.end());
-        propagationResult->nextState = std::make_shared<oppt::VectorState>(floatOutState);
+        // Process all random agents who weren't helped by an action this time
+        for (size_t j = actionVec.size(); j != outState.size(); j += 3) {
+            if (outState[j] == -1) {
+                FloatType x = stateVec[j];
+                FloatType y = stateVec[j+1];
+                FloatType c = stateVec[j+2];
+                int idx = (j - 2 * actionVec.size()) / 3;
+                std::string type = randomAgents_[idx].first;
+                VectorFloat t = transition(x, y, c, type);
+                for (size_t k = 0; k != 3; ++k) outState[j+k] = t[k];
+            }
+        }
+
+        propagationResult->previousState = propagationRequest->currentState.get();
+        propagationResult->action = propagationRequest->action;
+        propagationResult->nextState = std::make_shared<oppt::VectorState>(outState);
         // std::cout << "Completed HMITransitionPlugin.propagateState()..." << std::endl;
         return propagationResult;
     }
@@ -93,6 +100,59 @@ private:
     hmi::Grid grid_;
     std::unordered_map<std::string, hmi::TransitionMatrix> transitionMatrices_;
     hmi::ShortestPaths shortestPaths_;
+
+    VectorFloat transition(FloatType x, FloatType y, FloatType c, std::string type) const {
+        RandomEngine generator;
+        FloatType outX = x;
+        FloatType outY = y;
+        FloatType outC;
+        if (c == 0) {
+            VectorInt neighbours = getNeighbours(x, y);
+            if (!neighbours.empty()) {
+                int numN = neighbours.size() / 2;
+                std::uniform_int_distribution<int> moveDist(0, numN);
+                int idx = moveDist(generator);
+                outX = neighbours.at(2 * idx);
+                outY = neighbours.at(2 * idx + 1);
+            }
+        }
+        hmi::TransitionMatrix matrix = transitionMatrices_.at(type);
+        std::uniform_real_distribution<float> transDist(0.0, 1.0);
+        float changeVal = transDist(generator);
+        int newC = -1;
+
+        while (changeVal >= 0.0) {
+
+            // Move through successive conditions and subtract the probability of transitioning
+            // from the agent's current condition to the given condition from the given random
+            // float, until the sign of the given random float is not positive.
+            ++newC;
+            changeVal -= matrix.matrix_[c][newC];
+        }
+        outC = newC;
+        return {outX, outY, outC};
+    }
+
+    VectorInt getNeighbours(FloatType x, FloatType y) const {
+        int xIdx = 0;
+        int yIdx = 0;
+        VectorInt neighbours = VectorInt();
+        for (xIdx = -1; xIdx != 2; xIdx += 2) {
+            int neighX = (int) (x + xIdx);
+            int neighY = (int) (y + yIdx);
+            bool validX = neighX > -1 && neighX < grid_.getWidth();
+            bool validY = neighY > -1 && neighY < grid_.getHeight();
+            if (validX && validY) {
+                hmi::Coordinate coord = hmi::Coordinate(neighX, neighY);
+                bool validCell = grid_.getGrid()[coord.toPosition(grid_)];
+                if (validCell) {
+                    neighbours.push_back(neighX);
+                    neighbours.push_back(neighY);
+                }
+            }
+        }
+        return neighbours;
+    }
     
 };
 

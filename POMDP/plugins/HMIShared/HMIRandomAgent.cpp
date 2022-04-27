@@ -8,35 +8,39 @@ namespace hmi
 int DEFAULT_CONDITION = 0;
 
 HMIRandomAgent::HMIRandomAgent(int x, int y, std::string type, int id, int condition, TransitionMatrix tm) :
-    x_(x), y_(y), type_(type), id_(id), condition_(condition), transitionMatrix_(tm) { }
+    coords_(Coordinate(x, y)), type_(type), id_(id), condition_(condition), transitionMatrix_(tm), leftAlone_(true) { }
 
 HMIRandomAgent::HMIRandomAgent(int x, int y, std::string type, int id, TransitionMatrix tm) :
-    x_(x), y_(y), type_(type), id_(id), condition_(DEFAULT_CONDITION), transitionMatrix_(tm) { }
+    coords_(Coordinate(x, y)), type_(type), id_(id), condition_(DEFAULT_CONDITION), transitionMatrix_(tm), leftAlone_(true) { }
 
 HMIRandomAgent::HMIRandomAgent(int x, int y, std::string type, int id, int condition) :
-    x_(x), y_(y), type_(type), id_(id), condition_(condition) { }
+    coords_(Coordinate(x, y)), type_(type), id_(id), condition_(condition), leftAlone_(true) { }
 
 HMIRandomAgent::HMIRandomAgent(int x, int y, int condition) :
-    x_(x), y_(y), condition_(condition) { }
+    coords_(Coordinate(x, y)), condition_(condition), leftAlone_(true) { }
 
 int HMIRandomAgent::getX() {
-    return x_;
+    return coords_.getX();
 }
 
 void HMIRandomAgent::setX(int x) {
-    x_ = x;
+    coords_ = Coordinate(x, coords_.getY());
 }
 
 int HMIRandomAgent::getY() {
-    return y_;
+    return coords_.getY();
 }
 
 void HMIRandomAgent::setY(int y) {
-    y_ = y;
+    coords_ = Coordinate(coords_.getX(), y);
 }
 
 Coordinate HMIRandomAgent::getCoords() {
-    return Coordinate(getX(), getY());
+    return coords_;
+}
+
+void HMIRandomAgent::setCoords(Coordinate &coords) {
+    coords_ = coords;
 }
 
 std::string HMIRandomAgent::getType() {
@@ -61,6 +65,14 @@ std::string HMIRandomAgent::getIdentifier() {
 
 TransitionMatrix HMIRandomAgent::getTransitionMatrix() {
     return transitionMatrix_;
+}
+
+bool HMIRandomAgent::isLeftAlone() {
+    return leftAlone_;
+}
+
+void HMIRandomAgent::setLeftAlone(bool leftAlone) {
+    leftAlone_ = leftAlone;
 }
 
 void HMIRandomAgent::sampleMovement(const Grid &grid) {

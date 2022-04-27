@@ -510,12 +510,8 @@ species random_agent {
 		// write "Running method set_type_and_id() of species random_agent...";
 	}
 	
-	/**
-     * Changes state according to the agent's stochastic state change matrix.
-     */
-    reflex change_state when: left_alone {
-    	// write("Running change_state() reflex of species random_agent...");
-	 	int i <- 0;
+	action change_state {
+		int i <- 0;
 	 	list<float> condition_row <- state_change_matrix row_at condition;
 	 	float state_change <- rnd(sum(condition_row)) - (condition_row at i);
 	 	loop while: state_change > 0.0 {
@@ -526,25 +522,30 @@ species random_agent {
 	 		world.transitions_to_unhappy <- world.transitions_to_unhappy + 1;
 	 	} 
 	 	condition <- i;
-	 	// write("Completed change_state() reflex of species random_agent...");
-    }
-    
-    /**
-     * Makes a random move to a neighboring cell with 50% chance.
-     */
-    reflex make_move when: condition = 0 and left_alone {
-    	// write("Running make_move() reflex of species random_agent...");
-    	int move_counter <- rnd(7);
-        int x_change <- 0;
-    	int y_change <- 0;
-    	if (move_counter = 0) {y_change <- -1;}
-	 	else if (move_counter = 1) {x_change <- 1;}
-	 	else if (move_counter = 2) {y_change <- 1;}
-	 	else if (move_counter = 3) {x_change <- -1;}
-	 	my_cell <- my_cell.find_neighboring_cell(x_change, y_change);
-	 	location <- my_cell.location;
-	 	// write("Completed make_move() reflex of species random_agent...");
-    }
+	}
+	
+	action make_move {
+		list<grid_cell> valid_ns <- my_cell neighbors_at 1;
+		valid_ns <- valid_ns where each.traversable;
+		if (!empty(valid_ns)) {
+		    my_cell <- any(valid_ns);
+		    location <- my_cell.location;
+		}
+	}
+	
+	action transition {
+		// If tau is true, the random agent will stay where it is.
+		bool tau <- !left_alone or condition > 0;
+		if (!tau) {
+			do make_move();
+		}
+		if (!left_alone) {
+			condition <- 0;
+		}
+		else {
+			do change_state();
+		}
+	}
     
     /**
      * Shrinks and justifies this random agent's sprite accordingly
@@ -677,7 +678,6 @@ species helper_robot {
 	 		    ask a {
 	 		    	// Help out the random agent
 	 			    left_alone <- true;
-	 			    condition <- 0;
 	 		    }
 	 	    }
 	 	}
@@ -849,6 +849,13 @@ species networker {
 	 		point<int> target_point <- {points at (2*i), points at (2*i + 1)};
 	 		ask helper_robot at i {
 	 			do do_action(target_point);
+	 		}
+	 	}
+	 	loop r over: random_agent {
+	 		ask r {
+	 			if (r.condition = 0) {do make_move();}
+	 			do change_state();
+	 			
 	 		}
 	 	}
 	}

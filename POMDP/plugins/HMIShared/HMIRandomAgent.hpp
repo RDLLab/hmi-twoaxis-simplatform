@@ -70,6 +70,8 @@ public:
 
     Coordinate getCoords();
 
+    void setCoords(Coordinate &coords);
+
     std::string getType();
 
     int getID();
@@ -81,6 +83,10 @@ public:
     std::string getIdentifier();
 
     TransitionMatrix getTransitionMatrix();
+
+    bool isLeftAlone();
+
+    void setLeftAlone(bool leftAlone);
 
     /**
      * Samples a single move and condition change for this agent. This involves
@@ -95,11 +101,8 @@ public:
 
 private:
 
-    // The agent's current x-coordinate.
-    int x_;
-
-    // The agent's current y-coordinate.
-    int y_;
+    // The agent's coordinates
+    Coordinate coords_;
 
     // The type to which this agent belongs, eg. toddler, elderly person etc.
     std::string type_;
@@ -110,6 +113,9 @@ private:
 
     // The agent's current condition.
     int condition_;
+
+    // Whether the agent is currently receiving help or not.
+    bool leftAlone_;
 
     // The transition matrix according to which the agent behaves.
     TransitionMatrix transitionMatrix_;
