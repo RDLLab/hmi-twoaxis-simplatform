@@ -35,7 +35,7 @@ public:
 
     virtual FloatType getReward(const PropagationResultSharedPtr& propagationResult) const override {
 
-        // std::cout << "Running getReward() in HMIRewardPlugin..." << std::endl;
+        std::cout << "Running getReward() in HMIRewardPlugin..." << std::endl;
 
         // Extract data from propagated state.
         VectorFloat previousStateVector = propagationResult->previousState->as<VectorState>()->asVector();
@@ -62,7 +62,7 @@ public:
     }
 
     virtual std::pair<FloatType, FloatType> getMinMaxReward() const override {
-        // std::cout << "Running and completing method getMinMaxReward() in class HMIRewardPlugin...\n";
+        std::cout << "Running and completing method getMinMaxReward() in class HMIRewardPlugin...\n";
         FloatType numRobots = robotEnvironment_->getRobot()->getActionSpace()->getNumDimensions() / 2.0;
         return std::make_pair(illegalMovePenalty, helpReward * numRobots);
     }

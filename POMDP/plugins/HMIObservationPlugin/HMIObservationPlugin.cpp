@@ -29,7 +29,7 @@ public:
 
     virtual bool load(const std::string& optionsFile) override {
 
-        // std::cout << "Running method load() in class HMIObservationPlugin...\n";
+        std::cout << "Running method load() in class HMIObservationPlugin...\n";
         
         // Parse the options for this plugin.
         parseOptions_<HMIObservationPluginOptions>(optionsFile);
@@ -49,14 +49,14 @@ public:
         std::string randId = randomAgents_[0].first;
         numConditions_ = transitionMatrices_.at(randId).numConditions_;
         
-        // std::cout << "Completed method load() in class HMIObservationPlugin...\n";
+        std::cout << "Completed method load() in class HMIObservationPlugin...\n";
 
         return true;
     }
 
     virtual ObservationResultSharedPtr getObservation(const ObservationRequest* observationRequest) const override {
         
-        // std::cout << "Running method getObservation() in class HMIObservationPlugin...\n";
+        std::cout << "Running method getObservation() in class HMIObservationPlugin...\n";
         // Create the pointer that will store the result of the observation to be made.
         ObservationResultSharedPtr obsResult = std::make_shared<ObservationResult>();
 
@@ -85,7 +85,7 @@ public:
         obsResult->observation = observation;
         obsResult->errorVector = observationRequest->errorVector;
 
-        // std::cout << "Completed method getObservation() in class HMIObservationPlugin...\n";
+        std::cout << "Completed method getObservation() in class HMIObservationPlugin...\n";
 
         return obsResult;
     }
