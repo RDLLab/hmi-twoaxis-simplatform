@@ -29,11 +29,7 @@ public:
     virtual bool load(const std::string &optionsFile) override {
         // // std::cout << "Running method load() in HMIObservationExecutionPlugin..." << std::endl;
         parseOptions_<HMIObservationExecutionPluginOptions>(optionsFile);
-        pipePathToGama_ = static_cast<HMIObservationExecutionPluginOptions*>(options_.get())->pipePathToGama;
         pipePathToSolver_ = static_cast<HMIObservationExecutionPluginOptions*>(options_.get())->pipePathToSolver;
-        std::string randomAgentsPath
-          = static_cast<HMIObservationExecutionPluginOptions*>(options_.get())->randomAgentsPath;
-        randomAgents_ = hmi::instantiateTypesAndIDs(randomAgentsPath);
         // // std::cout << "Completed method load() in HMIObservationExecutionPlugin..." << std::endl;
         return true;
     }
@@ -59,6 +55,8 @@ public:
         }
 
         ObservationSharedPtr observation = std::make_shared<DiscreteVectorObservation>(observationVec);
+        observationResult->state = observationRequest->currentState.get();
+        observationResult->action = observationRequest->action;
         observationResult->observation = observation;
         observationResult->errorVector = observationRequest->errorVector;
         // std::cout << "Completed method getObservation() in HMIObservationExecutionPlugin..." << std::endl;
@@ -67,9 +65,7 @@ public:
 
 private:
 
-    std::string pipePathToGama_;
     std::string pipePathToSolver_;
-    std::vector<hmi::TypeAndId> randomAgents_;
 
 };
 

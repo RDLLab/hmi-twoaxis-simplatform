@@ -34,13 +34,6 @@ public:
         // Parse the options for this plugin.
         parseOptions_<HMIObservationPluginOptions>(optionsFile);
 
-        // Extract data for the current grid being used and enrich it into a
-        // Grid data structure.
-        std::string gridPath
-            = static_cast<HMIObservationPluginOptions*>(options_.get())->gridPath;
-        grid_ = hmi::instantiateGrid(gridPath);
-        shortestPaths_ = hmi::ShortestPaths(grid_);
-
         // Extract random agent data for the current problem and enrich it into
         // a richer data structure.
         std::string randomAgentsPath
@@ -65,51 +58,41 @@ public:
         
         // std::cout << "Running method getObservation() in class HMIObservationPlugin...\n";
         // Create the pointer that will store the result of the observation to be made.
-        ObservationResultSharedPtr observationResult = std::make_shared<ObservationResult>();
+        ObservationResultSharedPtr obsResult = std::make_shared<ObservationResult>();
 
         // Convert the current state of the problem into a richer data format.
         VectorFloat stateVec = observationRequest->currentState->as<VectorState>()->asVector();
-        hmi::HMIState hmiState(stateVec, randomAgents_, transitionMatrices_, grid_);
-
-        // Initialise the observation data.
-        hmi::HMIObservation hmiObservation(hmiState, numConditions_);
-
-        // Determine what action will be made from the given data.
-        observationResult->state = observationRequest->currentState.get();
-        observationResult->action = observationRequest->action;
         VectorFloat actionVec = observationRequest->action->as<VectorAction>()->asVector();
-        std::set<std::string> targetAgents = hmiObservation.getUnderlyingState().getTargetAgents(actionVec);
+        size_t robOffset = actionVec.size();
 
-        std::vector<std::string> shortestPaths(hmiState.getRobots().size());
-        int maxShortestPath = 0;
-        for (size_t i = 0; i != hmiState.getRobots().size(); ++i) {
-            hmi::HMIRobot robot = hmiState.getRobots()[i];
-            hmi::Coordinate robotCoordinates = robot.getCoordinates();
-            hmi::Coordinate actionCoordinates((int) actionVec[2*i], (int) actionVec[2*i + 1]);
-            std::string path = shortestPaths_.getPath(robotCoordinates.toPosition(grid_), actionCoordinates.toPosition(grid_));
-            shortestPaths[i] = path;
-            maxShortestPath = std::max((int) path.size(), maxShortestPath);
+        VectorFloat obsVec = VectorFloat(randomAgents_.size());
+        RandomEngine generator;
+        std::uniform_real_distribution<float> obsDist(0, 1.0);
+
+        for (size_t i = 0; i != obsVec.size(); ++i) {
+            FloatType obs = obsDist(generator);
+            int trueC = stateVec[3 * i + robOffset];
+            if (obs < 0.8) obsVec[i] = trueC;
+            else {
+                int obsIdx = (int) ((obs - 0.8) * 5 * (numConditions_ - 1));
+                obsVec[i] = obsIdx >= trueC ? obsIdx + 1 : obsIdx;
+            }
         }
 
-        hmiObservation.sampleMovement(maxShortestPath, shortestPaths, targetAgents);
-
-        // Populate the resulting observation and return it.
-        VectorInt outVector = hmiObservation.toVector();
-        VectorFloat floatOutVector(outVector.begin(), outVector.end());
-        ObservationSharedPtr observation = std::make_shared<DiscreteVectorObservation>(floatOutVector);
-        observationResult->observation = observation;
-        observationResult->errorVector = observationRequest->errorVector;
+        ObservationSharedPtr observation = std::make_shared<DiscreteVectorObservation>(obsVec);
+        obsResult->state = observationRequest->currentState.get();
+        obsResult->action = observationRequest->action;
+        obsResult->observation = observation;
+        obsResult->errorVector = observationRequest->errorVector;
 
         // std::cout << "Completed method getObservation() in class HMIObservationPlugin...\n";
 
-        return observationResult;
+        return obsResult;
     }
 
 private:
     std::vector<hmi::TypeAndId> randomAgents_;
-    hmi::Grid grid_;
     std::unordered_map<std::string, hmi::TransitionMatrix> transitionMatrices_;
-    hmi::ShortestPaths shortestPaths_;
     int numConditions_;
 };
 
