@@ -853,9 +853,7 @@ species networker {
 	 	}
 	 	loop r over: random_agent {
 	 		ask r {
-	 			if (r.condition = 0) {do make_move();}
-	 			do change_state();
-	 			
+	 			do transition();
 	 		}
 	 	}
 	}
