@@ -48,34 +48,53 @@ public:
 
     virtual FloatType getHeuristicValue(const HeuristicInfo* heuristicInfo) const override {
         // std::cout << "Running method getHeuristicValue() in class HMIHeuristicPlugin...\n";
+        // Get the current state and action performed
         VectorFloat stateVec =
             heuristicInfo->currentState->as<VectorState>()->asVector();
         VectorFloat actionVec =
             heuristicInfo->action->as<VectorAction>()->asVector();
+
+        // Set up values to modify and store overall reward
         FloatType currentDiscount = 1.0;
         FloatType totalDiscountedReward = 0.0;
 
+        // Find out how many robots and random agents are in the problem
         int numRobots = actionVec.size() / 2;
         int numRandAgents = (stateVec.size() - actionVec.size()) / 3;
+
+        // Want to keep track of which agents we've helped already, will only help each agent once
         std::vector<bool> agentsVisited = std::vector<bool>(numRandAgents, false);
         bool allAgentsHelped = false;
         while (!allAgentsHelped) {
+
+            // Get the current discount for this timestep in the problem
             currentDiscount *= heuristicInfo->discountFactor;
+
+            // gRewards stores the greedy potential rewards from helping each random agent now
             VectorFloat gRewards = VectorFloat(numRobots, 0);
+            // gIndices stores which random agent will give a certain robot the best reward
             VectorInt gIndices = VectorInt(numRobots, -1);
+            // Sorted rewards
             VectorFloat bestRewards = VectorFloat();
+            // Robot and agent that create a reward in `bestRewards` at index i
             std::vector<hmi::Coordinate> bestRobotAgentCombinations = std::vector<hmi::Coordinate>();
+
             for (int i = 0; i != actionVec.size(); i += 2) {
+                // Get the starting coordinate of the robot
                 hmi::Coordinate start = hmi::Coordinate(stateVec[i], stateVec[i + 1]);
                 for (int j = actionVec.size(); j != stateVec.size(); j += 3) {
+                    // Get the coordinate of the random agent it might help
                     hmi::Coordinate action = hmi::Coordinate(stateVec[j], stateVec[j + 1]);
+                    // Reward depends on the condition of the random agent
                     FloatType possReward = stateVec[j + 2] > 0 ? helpReward : 0.0;
+                    // Apply step penalty
                     possReward -= paths_.getPath(start.toPosition(grid_), action.toPosition(grid_)).size();
                     bool inserted = false;
                     VectorFloat::iterator it;
                     std::vector<hmi::Coordinate>::iterator cit = bestRobotAgentCombinations.begin();
                     for (it = bestRewards.begin(); it != bestRewards.end(); ++it) {
                         if (possReward > *it) {
+                            // Sort the best rewards and corresponding robot-agent combinations using insertion sort
                             bestRewards.insert(it, possReward);
                             bestRobotAgentCombinations.insert(cit, hmi::Coordinate(i / 2, (j - actionVec.size()) / 3));
                             inserted = true;
@@ -84,29 +103,41 @@ public:
                         ++cit;
                     }
                     if (!inserted) {
+                        // Worst reward yet, push it to the back of the vector
                         bestRewards.push_back(possReward);
                         bestRobotAgentCombinations.push_back(hmi::Coordinate(i / 2, (j - actionVec.size()) / 3));
                     }
                 }
             }
             for (int i = 0; i != bestRewards.size(); ++i) {
+                // Get the robot and the random agent to create this reward
                 int robotIdx = bestRobotAgentCombinations[i].getX();
                 int agentIdx = bestRobotAgentCombinations[i].getY();
+                // Check that the robot is not already helping another agent for a better reward
                 bool robotFree = gIndices[robotIdx] < 0;
+                // Check that the agent is not already being helped by another robot
                 bool agentFree = std::find(gIndices.begin(), gIndices.end(), agentIdx) == gIndices.end();
+                // Also need to check the agent hasn't been visited already in this rollout
                 if (robotFree && agentFree && !agentsVisited[agentIdx]) {
+                    // Robot is now set to help this agent
                     gIndices[robotIdx] = agentIdx;
+                    // Reward from this robot's action is what was found in `bestRewards`
                     gRewards[robotIdx] = bestRewards[i];
+                    // This agent has now been visited
                     agentsVisited[agentIdx] = true;
+                    // Change robot's x- and y-coordinates to reflect it helping this random agent
                     stateVec[robotIdx * 2] = stateVec[agentIdx * 3 + actionVec.size()];
                     stateVec[robotIdx * 2 + 1] = stateVec[agentIdx * 3 + actionVec.size() + 1];
+                    // Change the condition of the random agent being helped to "happy"
                     stateVec[agentIdx * 3 + actionVec.size() + 2] = 0;
                 }
+                // If every robot is helping a random agent at this state, then move to the next state
                 if (std::find(gIndices.begin(), gIndices.end(), -1) == gIndices.end()) break;
             }
-
+            // Process rewards
             for (FloatType reward : gRewards) totalDiscountedReward += currentDiscount * reward;
 
+            // Handle transitions for agents that didn't receive help
             for (int j = actionVec.size(); j != stateVec.size(); j += 3) {
                 int idx = (j - actionVec.size()) / 3;
                 if (std::find(gIndices.begin(), gIndices.end(), idx) == gIndices.end()) {
@@ -119,6 +150,7 @@ public:
                 }
             }
 
+            // Check if every agent has been helped, which if so would end the rollout
             allAgentsHelped = std::find(agentsVisited.begin(), agentsVisited.end(), false) == agentsVisited.end();
         }
 
