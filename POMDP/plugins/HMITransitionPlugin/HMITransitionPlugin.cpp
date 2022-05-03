@@ -31,7 +31,7 @@ public:
     virtual ~HMITransitionPlugin() = default;
 
     virtual bool load(const std::string &optionsFile) override {
-        std::cout << "Running method load() in class HMITransitionPlugin...\n";
+        // std::cout << "Running method load() in class HMITransitionPlugin...\n";
         parseOptions_<HMITransitionPluginOptions>(optionsFile);
         std::string gridPath
           = static_cast<HMITransitionPluginOptions*>(options_.get())->gridPath;
@@ -43,44 +43,44 @@ public:
         std::string transitionMatricesPath
             = static_cast<HMITransitionPluginOptions*>(options_.get())->transitionMatrixPath;
         transitionMatrices_ = hmi::instantiateTransitionMatrices(transitionMatricesPath);
-        std::cout << "Completed method load() in class HMITransitionPlugin...\n";
+        // std::cout << "Completed method load() in class HMITransitionPlugin...\n";
 
         return true;
     }
 
     virtual PropagationResultSharedPtr propagateState(const PropagationRequest* propagationRequest) const override {
-        std::cout << "Running HMITransitionPlugin.propagateState()..." << std::endl;
+        // std::cout << "Running HMITransitionPlugin.propagateState()..." << std::endl;
         PropagationResultSharedPtr propagationResult(new PropagationResult());
-        std::cout << "Setting up action vector" << std::endl;
+        // std::cout << "Setting up action vector" << std::endl;
         VectorFloat actionVec = propagationRequest->action->as<VectorAction>()->asVector();
-        //std::cout << "Action is (" << actionVec[0] << "," << actionVec[1] << ")" << std::endl;
+        //// std::cout << "Action is (" << actionVec[0] << "," << actionVec[1] << ")" << std::endl;
         VectorFloat stateVec(propagationRequest->currentState->as<VectorState>()->asVector());
-        std::cout << "Instantiating outState..." << std::endl;
+        // std::cout << "Instantiating outState..." << std::endl;
         VectorFloat outState(stateVec.size(), -1);
 
         // Process actions and any random agents helped by those actions
-        std::cout << "Start action loop" << std::endl;
+        // std::cout << "Start action loop" << std::endl;
         for (size_t i = 0; i != actionVec.size(); i += 2) {
             // The i-th robot's x-coordinate in s'
-            std::cout << "Copy x-coordinate" << std::endl;
+            // std::cout << "Copy x-coordinate" << std::endl;
             outState[i] = actionVec[i];
             // The i-th robot's y-coordinate in s'
-            std::cout << "Copy y-coordinate" << std::endl;
+            // std::cout << "Copy y-coordinate" << std::endl;
             outState[i+1] = actionVec[i+1];
-            std::cout << "Start agent loop" << std::endl;
+            // std::cout << "Start agent loop" << std::endl;
             for (size_t j = actionVec.size(); j != stateVec.size(); j += 3) {
-                std::cout << "Check x-coordinate" << std::endl;
+                // std::cout << "Check x-coordinate" << std::endl;
                 bool sameX = stateVec[j] == actionVec[i];
-                std::cout << "Check y-coordinate" << std::endl;
+                // std::cout << "Check y-coordinate" << std::endl;
                 bool sameY = stateVec[j+1] == actionVec[i+1];
                 // Helper robot is moving towards random agent's location
-                std::cout << "Check matching coordinates" << std::endl;
+                // std::cout << "Check matching coordinates" << std::endl;
                 if (sameX && sameY) {
-                    std::cout << "Same x-coordinate" << std::endl;
+                    // std::cout << "Same x-coordinate" << std::endl;
                     outState[j] = stateVec[j];
-                    std::cout << "Same y-coordinate" << std::endl;
+                    // std::cout << "Same y-coordinate" << std::endl;
                     outState[j+1] = stateVec[j+1];
-                    std::cout << "Agent is happy" << std::endl;
+                    // std::cout << "Agent is happy" << std::endl;
                     outState[j+2] = 0;
                 }
             }
@@ -93,9 +93,9 @@ public:
                 FloatType y = stateVec[j+1];
                 FloatType c = stateVec[j+2];
                 int idx = (j - actionVec.size()) / 3;
-                std::cout << "j is " << j << std::endl;
-                std::cout << "actionVec.size() is " << actionVec.size() << std::endl;
-                std::cout << "Index is " << idx << std::endl;
+                // std::cout << "j is " << j << std::endl;
+                // std::cout << "actionVec.size() is " << actionVec.size() << std::endl;
+                // std::cout << "Index is " << idx << std::endl;
                 std::string type = randomAgents_[idx].first;
                 VectorFloat t = transition(x, y, c, type);
                 for (size_t k = 0; k != 3; ++k) outState[j+k] = t[k];
@@ -105,7 +105,7 @@ public:
         propagationResult->previousState = propagationRequest->currentState.get();
         propagationResult->action = propagationRequest->action;
         propagationResult->nextState = std::make_shared<oppt::VectorState>(outState);
-        std::cout << "Completed HMITransitionPlugin.propagateState()..." << std::endl;
+        // std::cout << "Completed HMITransitionPlugin.propagateState()..." << std::endl;
         return propagationResult;
     }
 
@@ -117,7 +117,7 @@ private:
     hmi::ShortestPaths shortestPaths_;
 
     VectorFloat transition(FloatType x, FloatType y, FloatType c, std::string type) const {
-        std::cout << "Starting transition()..." << std::endl;
+        // std::cout << "Starting transition()..." << std::endl;
         RandomEngine generator;
         FloatType outX = x;
         FloatType outY = y;
@@ -125,7 +125,7 @@ private:
         if (c == 0) {
             VectorInt neighbours = getNeighbours(x, y);
             if (!neighbours.empty()) {
-                std::cout << "Making a move..." << std::endl;
+                // std::cout << "Making a move..." << std::endl;
                 int numN = neighbours.size() / 2;
                 std::uniform_int_distribution<int> moveDist(0, numN);
                 int idx = moveDist(generator);
@@ -133,7 +133,7 @@ private:
                 outY = neighbours.at(2 * idx + 1);
             }
         }
-        std::cout << "Instantiating a transition matrix..." << std::endl;
+        // std::cout << "Instantiating a transition matrix..." << std::endl;
         hmi::TransitionMatrix matrix = transitionMatrices_.at(type);
         std::uniform_real_distribution<float> transDist(0.0, 1.0);
         float changeVal = transDist(generator);
@@ -145,16 +145,16 @@ private:
             // from the agent's current condition to the given condition from the given random
             // float, until the sign of the given random float is not positive.
             ++newC;
-            std::cout << "New condition is currently " << newC << std::endl;
+            // std::cout << "New condition is currently " << newC << std::endl;
             changeVal -= matrix.matrix_[c][newC];
         }
         outC = newC;
-        std::cout << "Completed transition()..." << std::endl;
+        // std::cout << "Completed transition()..." << std::endl;
         return {outX, outY, outC};
     }
 
     VectorInt getNeighbours(FloatType x, FloatType y) const {
-        std::cout << "Running getNeighbours()..." << std::endl;
+        // std::cout << "Running getNeighbours()..." << std::endl;
         VectorInt neighbours = VectorInt();
         for (int xIdx = -1; xIdx != 2; ++xIdx) {
             for (int yIdx = -1; yIdx != 2; ++yIdx) {
@@ -174,7 +174,7 @@ private:
                 }
             }
         }
-        std::cout << "Completed getNeighbours()..." << std::endl;
+        // std::cout << "Completed getNeighbours()..." << std::endl;
         return neighbours;
     }
     

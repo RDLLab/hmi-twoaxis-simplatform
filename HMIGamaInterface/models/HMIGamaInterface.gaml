@@ -690,9 +690,13 @@ species helper_robot {
 	 * @param target_cell the cell that the robot is going to visit
 	 */
 	action notify_random_agents(grid_cell target_cell) {
-		ask target_cell.dependents_in_cell {
-	 		left_alone <- false;
-	 	}
+		loop r over: random_agent {
+			if (r.my_cell = my_cell) {
+				ask r {
+					left_alone <- false;
+				}
+			}
+		}
 	}
 	
 	/**
