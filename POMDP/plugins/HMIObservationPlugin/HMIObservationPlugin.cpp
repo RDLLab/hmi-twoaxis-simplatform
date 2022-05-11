@@ -71,11 +71,12 @@ public:
 
         for (size_t i = 0; i != obsVec.size(); ++i) {
             FloatType obs = obsDist(generator);
-            int trueC = stateVec[3 * i + robOffset];
+            int trueC = stateVec[3 * i + robOffset + 2];
             if (obs < 0.8) obsVec[i] = trueC;
             else {
                 int obsIdx = (int) ((obs - 0.8) * 5 * (numConditions_ - 1));
-                obsVec[i] = obsIdx >= trueC ? obsIdx + 1 : obsIdx;
+                int observation = obsIdx >= trueC ? obsIdx + 1 : obsIdx;
+                obsVec[i] = observation;
             }
         }
 

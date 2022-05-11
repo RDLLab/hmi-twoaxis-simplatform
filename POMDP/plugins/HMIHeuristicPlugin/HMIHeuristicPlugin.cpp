@@ -35,7 +35,7 @@ public:
             = static_cast<HMIHeuristicOptions*>(options_.get())->gridPath;
         grid_ = hmi::instantiateGrid(gridPath);
         paths_ = hmi::ShortestPaths(grid_);
-        helpReward = paths_.getLongestPath() + 1;
+        helpReward = 100 * (paths_.getLongestPath() + 1);
         std::string randomAgentsPath
             = static_cast<HMIHeuristicOptions*>(options_.get())->randomAgentsPath;
         randomAgents_ = hmi::instantiateTypesAndIDs(randomAgentsPath);
@@ -135,7 +135,11 @@ public:
                 if (std::find(gIndices.begin(), gIndices.end(), -1) == gIndices.end()) break;
             }
             // Process rewards
-            for (FloatType reward : gRewards) totalDiscountedReward += currentDiscount * reward;
+            std::string rewards = "";
+            for (FloatType reward : gRewards) {
+                rewards += std::to_string(reward) + ", ";
+                totalDiscountedReward += currentDiscount * reward;
+            }
 
             // Handle transitions for agents that didn't receive help
             for (int j = actionVec.size(); j != stateVec.size(); j += 3) {

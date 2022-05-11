@@ -68,9 +68,9 @@ global {
 
     string config_file_path <- base_directory + "cfg/HMISolver.cfg";
     
-    list<string> randag_types <- ["ELDERLY", "TODDLER"];
+    list<string> randag_types <- ["ELDERLY"];
 	
-	map<string, int> randag_map <- create_map(randag_types, [1, 1]);
+	map<string, int> randag_map <- create_map(randag_types, [1]);
 	
 	list<string> random_agents;
 	

@@ -19,6 +19,9 @@
 #include <set>
 #include <stdlib.h>
 
+#include <iostream>
+
+
 namespace oppt 
 {
 class HMITransitionPlugin: public TransitionPlugin 
@@ -102,6 +105,22 @@ public:
             }
         }
 
+        std::ostringstream oss;
+        std::copy(stateVec.begin(), stateVec.end()-1, std::ostream_iterator<FloatType>(oss, ","));
+
+        // Now add the last element with no delimiter
+        oss << stateVec.back() << std::endl;
+        std::copy(actionVec.begin(), actionVec.end()-1, std::ostream_iterator<FloatType>(oss, ","));
+
+        // Now add the last element with no delimiter
+        oss << actionVec.back() << std::endl;
+        std::copy(outState.begin(), outState.end()-1, std::ostream_iterator<FloatType>(oss, ","));
+
+        // Now add the last element with no delimiter
+        oss << outState.back() << std::endl;
+
+        std::cout << oss.str() << std::endl;
+
         propagationResult->previousState = propagationRequest->currentState.get();
         propagationResult->action = propagationRequest->action;
         propagationResult->nextState = std::make_shared<oppt::VectorState>(outState);
@@ -118,7 +137,8 @@ private:
 
     VectorFloat transition(FloatType x, FloatType y, FloatType c, std::string type) const {
         // std::cout << "Starting transition()..." << std::endl;
-        RandomEngine generator;
+        std::random_device rd;
+        RandomEngine generator(rd());
         FloatType outX = x;
         FloatType outY = y;
         FloatType outC;
@@ -127,7 +147,7 @@ private:
             if (!neighbours.empty()) {
                 // std::cout << "Making a move..." << std::endl;
                 int numN = neighbours.size() / 2;
-                std::uniform_int_distribution<int> moveDist(0, numN);
+                std::uniform_int_distribution<int> moveDist(0, numN - 1);
                 int idx = moveDist(generator);
                 outX = neighbours.at(2 * idx);
                 outY = neighbours.at(2 * idx + 1);
@@ -158,6 +178,9 @@ private:
         VectorInt neighbours = VectorInt();
         for (int xIdx = -1; xIdx != 2; ++xIdx) {
             for (int yIdx = -1; yIdx != 2; ++yIdx) {
+                bool validMove = false;
+                std::cout << "For x == " << std::to_string(x) << ", y == " << std::to_string(y) << ", " << std::endl;
+                std::cout << "Testing xIdx == " << std::to_string(xIdx) << ", yIdx == " << std::to_string(yIdx) << std::endl;
                 if (abs(xIdx - yIdx) == 1) {
                     int neighX = (int) (x + xIdx);
                     int neighY = (int) (y + yIdx);
@@ -169,9 +192,12 @@ private:
                         if (validCell) {
                             neighbours.push_back(neighX);
                             neighbours.push_back(neighY);
+                            validMove = true;
                         }
                     }
                 }
+                if (validMove) std::cout << "Valid move!" << std::endl;
+                else           std::cout << "Invalid move..." << std::endl;
             }
         }
         // std::cout << "Completed getNeighbours()..." << std::endl;

@@ -30,8 +30,8 @@ public:
             = static_cast<HMIRewardOptions*>(options_.get())->gridPath;
         grid_ = hmi::instantiateGrid(gridPath);
         shortestPaths_ = hmi::ShortestPaths(grid_);
-        helpReward = shortestPaths_.getLongestPath() + 1;
-        illegalMovePenalty = -100.0 * helpReward;
+        helpReward = 100 * (shortestPaths_.getLongestPath() + 1);
+        illegalMovePenalty = -helpReward / 2;
         // std::cout << "Completed method load() in class HMIRewardPlugin...\n";
         return true;
     }
