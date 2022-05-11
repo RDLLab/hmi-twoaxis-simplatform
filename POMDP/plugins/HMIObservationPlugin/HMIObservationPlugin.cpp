@@ -66,7 +66,8 @@ public:
         size_t robOffset = actionVec.size();
 
         VectorFloat obsVec = VectorFloat(randomAgents_.size());
-        RandomEngine generator;
+        std::random_device rd;
+        RandomEngine generator(rd());
         std::uniform_real_distribution<float> obsDist(0, 1.0);
 
         for (size_t i = 0; i != obsVec.size(); ++i) {
