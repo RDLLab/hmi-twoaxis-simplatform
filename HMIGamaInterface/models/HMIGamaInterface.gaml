@@ -68,9 +68,9 @@ global {
 
     string config_file_path <- base_directory + "cfg/HMISolver.cfg";
     
-    list<string> randag_types <- ["ELDERLY"];
+    list<string> randag_types <- ["ELDERLY", "TODDLER"];
 	
-	map<string, int> randag_map <- create_map(randag_types, [1]);
+	map<string, int> randag_map <- create_map(randag_types, [1, 1]);
 	
 	list<string> random_agents;
 	
@@ -525,7 +525,7 @@ species random_agent {
 	}
 	
 	action make_move {
-		list<grid_cell> valid_ns <- my_cell neighbors_at 1;
+		list<grid_cell> valid_ns <- topology(grid_cell) neighbors_of my_cell;
 		valid_ns <- valid_ns where each.traversable;
 		if (!empty(valid_ns)) {
 		    my_cell <- any(valid_ns);

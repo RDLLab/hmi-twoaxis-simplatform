@@ -105,21 +105,21 @@ public:
             }
         }
 
-        std::ostringstream oss;
-        std::copy(stateVec.begin(), stateVec.end()-1, std::ostream_iterator<FloatType>(oss, ","));
+        // std::ostringstream oss;
+        // std::copy(stateVec.begin(), stateVec.end()-1, std::ostream_iterator<FloatType>(oss, ","));
 
-        // Now add the last element with no delimiter
-        oss << stateVec.back() << std::endl;
-        std::copy(actionVec.begin(), actionVec.end()-1, std::ostream_iterator<FloatType>(oss, ","));
+        // // Now add the last element with no delimiter
+        // oss << stateVec.back() << std::endl;
+        // std::copy(actionVec.begin(), actionVec.end()-1, std::ostream_iterator<FloatType>(oss, ","));
 
-        // Now add the last element with no delimiter
-        oss << actionVec.back() << std::endl;
-        std::copy(outState.begin(), outState.end()-1, std::ostream_iterator<FloatType>(oss, ","));
+        // // Now add the last element with no delimiter
+        // oss << actionVec.back() << std::endl;
+        // std::copy(outState.begin(), outState.end()-1, std::ostream_iterator<FloatType>(oss, ","));
 
-        // Now add the last element with no delimiter
-        oss << outState.back() << std::endl;
+        // // Now add the last element with no delimiter
+        // oss << outState.back() << std::endl;
 
-        std::cout << oss.str() << std::endl;
+        // std::cout << oss.str() << std::endl;
 
         propagationResult->previousState = propagationRequest->currentState.get();
         propagationResult->action = propagationRequest->action;
@@ -179,8 +179,6 @@ private:
         for (int xIdx = -1; xIdx != 2; ++xIdx) {
             for (int yIdx = -1; yIdx != 2; ++yIdx) {
                 bool validMove = false;
-                std::cout << "For x == " << std::to_string(x) << ", y == " << std::to_string(y) << ", " << std::endl;
-                std::cout << "Testing xIdx == " << std::to_string(xIdx) << ", yIdx == " << std::to_string(yIdx) << std::endl;
                 if (abs(xIdx - yIdx) == 1) {
                     int neighX = (int) (x + xIdx);
                     int neighY = (int) (y + yIdx);
@@ -196,8 +194,6 @@ private:
                         }
                     }
                 }
-                if (validMove) std::cout << "Valid move!" << std::endl;
-                else           std::cout << "Invalid move..." << std::endl;
             }
         }
         // std::cout << "Completed getNeighbours()..." << std::endl;
