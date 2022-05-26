@@ -43,7 +43,7 @@ global {
 	/** Path to a text file containing details about the problem grid. */
 	string grid_path <- model_directory + "HMIGrid.txt";
 	
-	/** Path to a text file containing details about each random agent's 
+	/** Path to a text file containing details about each requester's 
 	 *  condition transition matrix. */
 	string matrices_path <- model_directory + "HMITransitionMatrix.txt";
 	
@@ -51,9 +51,9 @@ global {
 	 * state. */
 	string initial_state_path <- model_directory + "HMIInitialState.txt";
 	
-	/** Path to a text file containing details about the random agents in this
+	/** Path to a text file containing details about the requesters in this
 	 *  problem. */
-	string randag_path <- model_directory + "HMIRandomAgents.txt";
+	string requesters_path <- model_directory + "HMIRequesters.txt";
 	
 	/** Path to a named pipe to send data to the solver about the problem's
 	 *  current belief state. */
@@ -68,19 +68,22 @@ global {
 
     string config_file_path <- base_directory + "cfg/HMISolver.cfg";
     
-    list<string> randag_types <- ["ELDERLY", "TODDLER"];
+    list<string> requester_types <- ["ELDERLY", "TODDLER"];
 	
-	map<string, int> randag_map <- create_map(randag_types, [1, 1]);
+	map<string, int> num_requesters_per_type <- create_map(requester_types, [1, 1]);
 	
 	list<string> random_agents;
 	
 	float num_turns_agent_waiting <- 0;
 	float transitions_to_unhappy <- 0;
+	float toddler_dist <- 0;
+	float elderly_dist <- 0;
+	float num_turns <- 0;
 	
 	list<point> robot_locations <- [{2,2}];
 	
-	map<string, list<point>> randag_locations <- create_map(randag_types, [[{0,0}], [{4,4}]]);
-	map<string, list<int>> randag_conditions <- create_map(randag_types, [[0], [0]]);
+	map<string, list<point>> randag_locations <- create_map(requester_types, [[{0,0}], [{4,4}]]);
+	map<string, list<int>> randag_conditions <- create_map(requester_types, [[0], [0]]);
 	
 	//list<point> randag_locations <- [{0,0}, {4,4}];
 	
@@ -103,7 +106,7 @@ global {
 	 * - Row 2: P{s_t+1 = sad | s_t = happy}; and
 	 * - Row 3: P{s_t+1 = angry | s_t = happy}.
 	 * */
-	map<string, matrix<float>> matrices <- create_map(randag_map.keys, [
+	map<string, matrix<float>> matrices <- create_map(num_requesters_per_type.keys, [
 		/* Elderly state transition matrix */
 		(matrix([[0.9, 0.0, 0.0, 0.5],
                 [0.1, 0.8, 0.0, 0.0],
@@ -152,8 +155,8 @@ global {
 	list<string> generate_randag_strings {
 		// write "Running method generate_randag_strings() of species world...";
 		list<string> res <- [];
-		loop r over: randag_map.keys {
-			loop i from: 0 to: (randag_map at r) - 1 {
+		loop r over: num_requesters_per_type.keys {
+			loop i from: 0 to: (num_requesters_per_type at r) - 1 {
 				res <- res + (r + "," + string(i));
 			}
 		}
@@ -299,7 +302,7 @@ global {
 				init_state_string <- init_state_string + "]";
 			}
 		}
-		string cmd <- send_to_pipe(randag_str, randag_path);
+		string cmd <- send_to_pipe(randag_str, requesters_path);
 		// write "Completed method initialise_random_agents() of species world...";
 		return init_state_string;
 	}
@@ -726,14 +729,6 @@ species helper_robot {
 		    }
 		}
 	}
-	
-	action update_wait_times {
-		loop r over: random_agent {
-			if (r.condition != 0) {
-				world.num_turns_agent_waiting <- world.num_turns_agent_waiting + 1;
-			}
-		}
-	}
 	 
 	 reflex execute_step when: !empty(path_to_follow) {
 	 	// // write("Running execute_step() reflex of species helper_robot...");
@@ -842,6 +837,12 @@ species networker {
 	 	res <- world.send_to_pipe(obs, obs_to_solver);
 	}
 	
+	int get_distance(random_agent r) {
+		grid_cell agent_cell <- r.my_cell;
+		grid_cell robot_cell <- helper_robot[0].my_cell;
+		return abs(agent_cell.grid_x - robot_cell.grid_x) + abs(agent_cell.grid_y - robot_cell.grid_y);
+	}
+	
 	reflex network when: ready_to_pair() {
 		if (world.cycle > 0) {
 			do send_state_and_observation();
@@ -858,8 +859,14 @@ species networker {
 	 	loop r over: random_agent {
 	 		ask r {
 	 			do transition();
+	 			if (r.condition > 0) {
+	 				world.num_turns_agent_waiting <- world.num_turns_agent_waiting + 1;
+	 			}
 	 		}
 	 	}
+	 	world.elderly_dist <- world.elderly_dist + get_distance(random_agent[0]);
+	 	world.toddler_dist <- world.toddler_dist + get_distance(random_agent[1]);
+	 	world.num_turns <- world.num_turns + 1;
 	}
 	
 }
@@ -903,11 +910,12 @@ experiment out type: gui {
 			species networker;
 		}
 		monitor "Average wait time" value: num_turns_agent_waiting / transitions_to_unhappy refresh_every: 1;
+		monitor "Average elderly distance" value: world.elderly_dist / world.num_turns refresh_every: 1;
+		monitor "Average toddler distance" value: world.toddler_dist / world.num_turns refresh_every: 1;
 	}
 	parameter "Number of robots" category: "Robot" var: num_robots init: 1;
 	parameter "Location of each robot" category: "Robot" var: robot_locations;
-	parameter "Type and number of random agents" category: "Random agents" var: randag_map;
-	parameter "Location of each random agent" category: "Random agents" var: randag_locations;
-	parameter "Condition of each random agent" category: "Random agents" var: randag_conditions;
-	parameter "Help only target agent" category: "General" var: help_only_target_agent init: true;
+	parameter "Type and number of requesters" category: "Requesters" var: num_requesters_per_type;
+	parameter "Location of each requester" category: "Requesters" var: randag_locations;
+	parameter "Condition of each requester" category: "Requesters" var: randag_conditions;
 }
