@@ -1,7 +1,7 @@
 #include "oppt/plugin/Plugin.hpp"
 #include "oppt/opptCore/Distribution.hpp"
 #include "HMITransitionPluginOptions.hpp"
-#include "plugins/HMIShared/HMIObservation.hpp"
+#include "plugins/HMIShared/HMIDataStructures.hpp"
 #include "plugins/HMIShared/ShortestPaths.hpp"
 
 #include <string>

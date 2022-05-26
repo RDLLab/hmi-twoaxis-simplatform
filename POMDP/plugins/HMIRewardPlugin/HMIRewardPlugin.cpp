@@ -1,6 +1,6 @@
 #include "oppt/plugin/Plugin.hpp"
 #include "HMIRewardOptions.hpp"
-#include "plugins/HMIShared/HMIState.hpp"
+#include "plugins/HMIShared/HMIDataStructures.hpp"
 #include "plugins/HMIShared/ShortestPaths.hpp"
 
 #include <string>

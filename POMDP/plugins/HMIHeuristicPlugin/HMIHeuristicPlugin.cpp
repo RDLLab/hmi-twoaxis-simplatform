@@ -2,7 +2,7 @@
 #define _HMI_HEURISTIC_PLUGIN_HPP_
 #include "oppt/plugin/Plugin.hpp"
 #include "HMIHeuristicOptions.hpp"
-#include "plugins/HMIShared/HMIObservation.hpp"
+#include "plugins/HMIShared/HMIDataStructures.hpp"
 #include "plugins/HMIShared/ShortestPaths.hpp"
 
 #include <string>
