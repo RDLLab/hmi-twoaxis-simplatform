@@ -34,7 +34,7 @@ done
 
 cd ..
 rm oppt_install.zip
-zip oppt_install.zip oppt_install/ -X
+zip oppt_install.zip ./oppt_install
 cd oppt_hmi_scripts
 
 if [ "$buildFlag" = true ] ; then
