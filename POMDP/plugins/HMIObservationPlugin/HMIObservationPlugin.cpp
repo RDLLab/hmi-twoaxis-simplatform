@@ -28,17 +28,15 @@ public:
     virtual ~HMIObservationPlugin() = default;
 
     virtual bool load(const std::string& optionsFile) override {
-
-        // std::cout << "Running method load() in class HMIObservationPlugin...\n";
         
         // Parse the options for this plugin.
         parseOptions_<HMIObservationPluginOptions>(optionsFile);
 
         // Extract random agent data for the current problem and enrich it into
         // a richer data structure.
-        std::string randomAgentsPath
-            = static_cast<HMIObservationPluginOptions*>(options_.get())->randomAgentsPath;
-        randomAgents_ = hmi::instantiateTypesAndIDs(randomAgentsPath);
+        std::string requestersPath
+            = static_cast<HMIObservationPluginOptions*>(options_.get())->requestersPath;
+        requesters_ = hmi::instantiateTypesAndIDs(requestersPath);
 
         // Extract transition matrix data for the current problem and enrich it into a
         // data structure that is easier to use.
@@ -46,17 +44,13 @@ public:
             = static_cast<HMIObservationPluginOptions*>(options_.get())->transitionMatrixPath;
         transitionMatrices_ = hmi::instantiateTransitionMatrices(transitionMatricesPath);
 
-        std::string randId = randomAgents_[0].first;
+        std::string randId = requesters_[0].first;
         numConditions_ = transitionMatrices_.at(randId).numConditions_;
-        
-        // std::cout << "Completed method load() in class HMIObservationPlugin...\n";
 
         return true;
     }
 
     virtual ObservationResultSharedPtr getObservation(const ObservationRequest* observationRequest) const override {
-        
-        // std::cout << "Running method getObservation() in class HMIObservationPlugin...\n";
         // Create the pointer that will store the result of the observation to be made.
         ObservationResultSharedPtr obsResult = std::make_shared<ObservationResult>();
 
@@ -65,7 +59,7 @@ public:
         VectorFloat actionVec = observationRequest->action->as<VectorAction>()->asVector();
         size_t robOffset = actionVec.size();
 
-        VectorFloat obsVec = VectorFloat(randomAgents_.size());
+        VectorFloat obsVec = VectorFloat(requesters_.size());
         std::random_device rd;
         RandomEngine generator(rd());
         std::uniform_real_distribution<float> obsDist(0, 1.0);
@@ -87,13 +81,11 @@ public:
         obsResult->observation = observation;
         obsResult->errorVector = observationRequest->errorVector;
 
-        // std::cout << "Completed method getObservation() in class HMIObservationPlugin...\n";
-
         return obsResult;
     }
 
 private:
-    std::vector<hmi::TypeAndId> randomAgents_;
+    std::vector<hmi::TypeAndId> requesters_;
     std::unordered_map<std::string, hmi::TransitionMatrix> transitionMatrices_;
     int numConditions_;
 };

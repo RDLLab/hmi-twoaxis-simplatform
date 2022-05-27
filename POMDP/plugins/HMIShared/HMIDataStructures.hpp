@@ -22,16 +22,12 @@ namespace oppt
 {
 namespace hmi
 {
-    
-const FloatType BASE_REWARD = 150.0;
-const FloatType MAX_REWARD = 10000.0;
-const FloatType MIN_REWARD = -1000000000.0;
 
 typedef std::pair<std::string, int> TypeAndId;
 
 const VectorString MOVES = {"N", "E", "S", "W"};
 
-// This struct manages the grid on which the robots and random agents move.
+// This struct manages the grid on which the robots and requesters move.
 // The underlying structure is a boolean matrix, where the truth of a cell
 // is determined by whether it can be traversed by agents or not. Put more
 // simply, a cell representing the floor would be "true", while a cell
@@ -47,27 +43,19 @@ struct Grid {
      * @param gridDetails the string representation of this grid
     **/
     Grid(std::string &gridDetails) {
-
-        // // std::cout << "Running constructor of Grid()..." << std::endl;
-
         // Set the width of the grid
         width_ = std::stoi(gridDetails);
         gridDetails = gridDetails.substr(gridDetails.find(",") + 1);
-
         // Set the height of the grid
         height_ = std::stoi(gridDetails);
         gridDetails = gridDetails.substr(gridDetails.find(",") + 1);
-
         // Define grid according to width and height provided
         grid_ = std::vector<bool>(width_ * height_);
         for (int i = 0; i < width_ * height_; ++i) {
-
             // Set whether the current grid square is traversible or not according
             // to the given data
             grid_[i] = gridDetails.at(i) == '_';
         }
-
-        // // std::cout << "Completed constructor of Grid()..." << std::endl;
     }
 
     int getWidth() const {
@@ -147,8 +135,8 @@ const std::vector<Coordinate> DIRECTIONS = {Coordinate(0, -1),   // north
                                             Coordinate(0, 1),    // south
                                             Coordinate(-1, 0)};  // west
 
-// This struct defines how individual random agents behave according to their type.
-// Behaviour is defined as the likelihood of a random agent changing their condition,
+// This struct defines how individual requesters behave according to their type.
+// Behaviour is defined as the likelihood of a requester changing their condition,
 // ie. a "happier" agent would have a transition matrix whereby it is more likely to
 // transition to a "happy" condition.
 struct TransitionMatrix {
@@ -158,7 +146,7 @@ struct TransitionMatrix {
     // to condition 'b'.
     std::vector<std::vector<float>> matrix_;
 
-    // The type of random agent that is associated with this transition matrix, eg.
+    // The type of requester that is associated with this transition matrix, eg.
     // toddlers, elderly people, etc.
     std::string type_;
 
@@ -175,27 +163,21 @@ struct TransitionMatrix {
      * @param matrixDetails      the string representation of this transition matrix
     **/
     TransitionMatrix(int numberOfConditions, std::string &matrixDetails) {
-        // std::cout << "Instantiating transition matrix..." << std::endl;
-        // // std::cout << "Individual matrix details are " << matrixDetails << std::endl;
         numConditions_ = numberOfConditions;
-
-        // Define to what type of random agent this transition matrix applies
+        // Define to what type of requester this transition matrix applies
         type_ = matrixDetails.substr(0, matrixDetails.find(","));
         matrixDetails = matrixDetails.substr(matrixDetails.find(",") + 1);
-
         // Define the matrix according to the given number of conditions. This must
         // be square because it must be defined that an agent can transition from any one
         // condition to another (even if the probability of that is 0.0)
         matrix_ = std::vector<std::vector<float>>(numberOfConditions, std::vector<float>(numberOfConditions));
         for (int fromCondition = 0; fromCondition < numberOfConditions; ++fromCondition) {
             for (int toCondition = 0; toCondition < numberOfConditions; ++toCondition) {
-
                 // Set value of the current matrix cell according to the given data
                 matrix_[fromCondition][toCondition] = std::stof(matrixDetails);
                 matrixDetails = matrixDetails.substr(matrixDetails.find(",") + 1);
             }
         }
-        // std::cout << "Completed instantiating transition matrix..." << std::endl;
     }
 
     TransitionMatrix() : type_(""), matrix_() { }
@@ -212,16 +194,16 @@ struct TransitionMatrix {
 **/
 Grid instantiateGrid(std::string &pathToGrid);
 
-std::vector<TypeAndId> instantiateTypesAndIDs(std::string &pathToRandomAgents);
+std::vector<TypeAndId> instantiateTypesAndIDs(std::string &pathToRequesters);
 
 /**
- * Instantiates each random agent type and their corresponding transition matrix. 
+ * Instantiates each requester's type and their corresponding transition matrix. 
  * This data is taken from a plaintext file detailing the number of conditions in 
- * the given problem, as well as each random agent type and their corresponding 
+ * the given problem, as well as each requester's type and their corresponding 
  * transition matrix. See the Readme for details as to how to create a plaintext 
- * representation of a map between random agent types and transition matrices.
+ * representation of a map between requester types and transition matrices.
  * 
- * @param pathToMatrices the path to a plaintext representation of random agent
+ * @param pathToMatrices the path to a plaintext representation of requester
  *                       types and their corresponding transition matrices
  * 
  * @result               the same information, but in a data structure as opposed to a string

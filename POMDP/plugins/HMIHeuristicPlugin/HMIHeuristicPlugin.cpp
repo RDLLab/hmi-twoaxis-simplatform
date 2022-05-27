@@ -29,25 +29,22 @@ public:
 
     virtual bool load(const std::string& optionsFile) override {
         // Set up the dependent agents as per robot environment.
-        // std::cout << "Running method load() in class HMIHeuristicPlugin...\n";
         parseOptions_<HMIHeuristicOptions>(optionsFile);
         std::string gridPath
             = static_cast<HMIHeuristicOptions*>(options_.get())->gridPath;
         grid_ = hmi::instantiateGrid(gridPath);
         paths_ = hmi::ShortestPaths(grid_);
         helpReward = 100 * (paths_.getLongestPath() + 1);
-        std::string randomAgentsPath
-            = static_cast<HMIHeuristicOptions*>(options_.get())->randomAgentsPath;
-        randomAgents_ = hmi::instantiateTypesAndIDs(randomAgentsPath);
+        std::string requestersPath
+            = static_cast<HMIHeuristicOptions*>(options_.get())->requestersPath;
+        requesters_ = hmi::instantiateTypesAndIDs(requestersPath);
         std::string transitionMatricesPath
             = static_cast<HMIHeuristicOptions*>(options_.get())->transitionMatrixPath;
         transitionMatrices_ = hmi::instantiateTransitionMatrices(transitionMatricesPath);
-        // std::cout << "Completed method load() in class HMIHeuristicPlugin...\n";
         return true;
     }
 
     virtual FloatType getHeuristicValue(const HeuristicInfo* heuristicInfo) const override {
-        // std::cout << "Running method getHeuristicValue() in class HMIHeuristicPlugin...\n";
         // Get the current state and action performed
         VectorFloat stateVec =
             heuristicInfo->currentState->as<VectorState>()->asVector();
@@ -148,7 +145,7 @@ public:
                     FloatType x = stateVec[j];
                     FloatType y = stateVec[j+1];
                     FloatType c = stateVec[j+2];
-                    std::string type = randomAgents_[idx].first;
+                    std::string type = requesters_[idx].first;
                     VectorFloat t = transition(x, y, c, type);
                     for (size_t k = 0; k != 3; ++k) stateVec[j+k] = t[k];
                 }
@@ -158,12 +155,11 @@ public:
             allAgentsHelped = std::find(agentsVisited.begin(), agentsVisited.end(), false) == agentsVisited.end();
         }
 
-        // std::cout << "Completed method getHeuristicValue() in class HMIHeuristicPlugin...\n";
         return totalDiscountedReward;
     }
 
 private:
-    std::vector<hmi::TypeAndId> randomAgents_;
+    std::vector<hmi::TypeAndId> requesters_;
     hmi::Grid grid_;
     std::unordered_map<std::string, hmi::TransitionMatrix> transitionMatrices_;
     hmi::ShortestPaths paths_;

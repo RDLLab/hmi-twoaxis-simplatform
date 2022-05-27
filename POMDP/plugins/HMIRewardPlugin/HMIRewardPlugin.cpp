@@ -24,7 +24,6 @@ public:
     virtual ~HMIRewardPlugin() = default;
 
     virtual bool load(const std::string& optionsFile) override {
-        // std::cout << "Running method load() in class HMIRewardPlugin...\n";
         parseOptions_<HMIRewardOptions>(optionsFile);
         std::string gridPath
             = static_cast<HMIRewardOptions*>(options_.get())->gridPath;
@@ -32,13 +31,10 @@ public:
         shortestPaths_ = hmi::ShortestPaths(grid_);
         helpReward = 100 * (shortestPaths_.getLongestPath() + 1);
         illegalMovePenalty = -helpReward / 2;
-        // std::cout << "Completed method load() in class HMIRewardPlugin...\n";
         return true;
     }
 
     virtual FloatType getReward(const PropagationResultSharedPtr& propagationResult) const override {
-
-        // std::cout << "Running getReward() in HMIRewardPlugin..." << std::endl;
 
         // Extract data from propagated state.
         VectorFloat previousStateVector = propagationResult->previousState->as<VectorState>()->asVector();
@@ -66,7 +62,6 @@ public:
     }
 
     virtual std::pair<FloatType, FloatType> getMinMaxReward() const override {
-        // std::cout << "Running and completing method getMinMaxReward() in class HMIRewardPlugin...\n";
         FloatType numRobots = robotEnvironment_->getRobot()->getActionSpace()->getNumDimensions() / 2.0;
         return std::make_pair(illegalMovePenalty, helpReward * numRobots);
     }

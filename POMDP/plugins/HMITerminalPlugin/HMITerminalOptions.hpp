@@ -14,26 +14,22 @@ public:
     /** @brief The filepath to load the problem's grid environment. */
     std::string gridPath = BASE_PATH + "models/HMIModel/HMIGrid.txt";
 
-    std::string randomAgentsPath = BASE_PATH + "models/HMIModel/HMIRandomAgents.txt";
+    std::string requestersPath = BASE_PATH + "models/HMIModel/HMIRequesters.txt";
 
     static std::unique_ptr<options::OptionParser> makeParser() {
-        // std::cout << "Running method makeParser() in class HMITerminalOptions...\n";
         std::unique_ptr<options::OptionParser> parser =
             PluginOptions::makeParser();
         addHMITerminalOptions(parser.get());
-        // std::cout << "Completed method makeParser() in class HMITerminalOptions...\n";
         return std::move(parser);
     }
 
     static void addHMITerminalOptions(options::OptionParser* parser) {
-        // std::cout << "Running method addHMITerminalOptions() in class HMITerminalOptions...\n";
         parser->addOption<std::string>("terminalPluginOptions",
                                        "gridPath",
                                        &HMITerminalOptions::gridPath);
         parser->addOption<std::string>("terminalPluginOptions",
-                                       "randomAgentsPath",
-                                       &HMITerminalOptions::randomAgentsPath);
-        // std::cout << "Completed method addHMITerminalOptions() in class HMITerminalOptions...\n";
+                                       "requestersPath",
+                                       &HMITerminalOptions::requestersPath);
     }
 
     const std::string BASE_PATH = "../oppt_install/oppt/";
