@@ -37,10 +37,10 @@ rm oppt_install.zip
 zip -r oppt_install.zip oppt_install
 cd oppt_hmi_scripts
 
-if [ "$buildFlag" = true ] ; then
-    ./build.sh
-else
-    ./remake.sh
-fi
+# if [ "$buildFlag" = true ] ; then
+#     ./build.sh
+# else
+#     ./remake.sh
+# fi
 
-source ../oppt_install/share/oppt/setup.sh
+# source ../oppt_install/share/oppt/setup.sh
