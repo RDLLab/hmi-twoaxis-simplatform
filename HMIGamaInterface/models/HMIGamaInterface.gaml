@@ -85,6 +85,10 @@ global {
 	map<string, list<point>> requester_locations <- create_map(requester_types, [[{0,0}], [{4,4}]]);
 	map<string, list<int>> requester_conditions <- create_map(requester_types, [[0], [0]]);
 	
+	float rho <- 100.0;
+	float zeta <- 0.8;
+	int plan_time <- 1;
+	
 	/** A map mapping each requester type to its corresponding condition 
 	 * transition matrix.
 	 * 
@@ -163,6 +167,9 @@ global {
 		file cfg_file <- file(base_config_file) writable true;
 		map<string, string> to_replace;
 		string res <- "";
+		put rho key: "rho" in: to_replace;
+		put zeta key: "zeta" in: to_replace;
+		put (plan_time * 1000) key: "stepTimeout" in: to_replace;
 		put robot_state key: "initialRobotState" in: to_replace;
 		put requester_state key: "initialRequesterState" in: to_replace;
 		put get_state_string() key: "[state]" in: to_replace;
@@ -801,9 +808,9 @@ species networker {
 		string obs_string <- "";
 		loop r over: requester {
 			list<float> obs_probs <- [];
-			// 0.8 chance to get correct observation, equal probability for others
+			// `zeta` chance to get correct observation, equal probability for others
 			loop c from: 0 to: num_conditions - 1 {
-				float prob <- r.condition = c ? 0.8 : (0.2 / num_conditions);
+				float prob <- r.condition = c ? zeta : ((1 - zeta) / num_conditions);
 				obs_probs <- obs_probs + prob;
 			}
 			// Randomly choose an observation to make (with biases)
@@ -887,4 +894,7 @@ experiment out type: gui {
 	parameter "Type and number of requesters" category: "Requesters" var: num_requesters_per_type;
 	parameter "Location of each requester" category: "Requesters" var: requester_locations;
 	parameter "Condition of each requester" category: "Requesters" var: requester_conditions;
+	parameter "Rho" category: "Hyperparameters" var: rho min: 1.0;
+	parameter "Zeta" category: "Hyperparameters" var: zeta min: 0.0 max: 1.0;
+	parameter "Planning time (in seconds)" category: "Hyperparameters" var: plan_time min: 1;
 }
