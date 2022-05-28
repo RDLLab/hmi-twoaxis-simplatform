@@ -38,6 +38,8 @@ public:
             = static_cast<HMIObservationPluginOptions*>(options_.get())->requestersPath;
         requesters_ = hmi::instantiateTypesAndIDs(requestersPath);
 
+        zeta_ = static_cast<HMIObservationPluginOptions*>(options_.get())->zeta;
+
         // Extract transition matrix data for the current problem and enrich it into a
         // data structure that is easier to use.
         std::string transitionMatricesPath
@@ -67,9 +69,9 @@ public:
         for (size_t i = 0; i != obsVec.size(); ++i) {
             FloatType obs = obsDist(generator);
             int trueC = stateVec[3 * i + robOffset + 2];
-            if (obs < 0.8) obsVec[i] = trueC;
+            if (obs < zeta_) obsVec[i] = trueC;
             else {
-                int obsIdx = (int) ((obs - 0.8) * 5 * (numConditions_ - 1));
+                int obsIdx = (int) ((obs - zeta_) * 5 * (numConditions_ - 1));
                 int observation = obsIdx >= trueC ? obsIdx + 1 : obsIdx;
                 obsVec[i] = observation;
             }
@@ -88,6 +90,7 @@ private:
     std::vector<hmi::TypeAndId> requesters_;
     std::unordered_map<std::string, hmi::TransitionMatrix> transitionMatrices_;
     int numConditions_;
+    FloatType zeta_;
 };
 
 OPPT_REGISTER_OBSERVATION_PLUGIN(HMIObservationPlugin)

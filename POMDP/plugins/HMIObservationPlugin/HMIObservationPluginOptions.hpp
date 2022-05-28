@@ -18,7 +18,9 @@ public:
 
     /** @brief The filepath to load the state transition matrices for each
      *  requester. */
-    std::string transitionMatrixPath = BASE_PATH + "models/HMIModel/HMITransitionMatrices.txt";    
+    std::string transitionMatrixPath = BASE_PATH + "models/HMIModel/HMITransitionMatrices.txt";
+
+    FloatType zeta = 0.8;
 
     static std::unique_ptr<options::OptionParser> makeParser() {
         std::unique_ptr<options::OptionParser> parser =
@@ -37,6 +39,9 @@ public:
         parser->addOption<std::string>("observationPluginOptions",
                                        "transitionMatrixPath",
                                        &HMIObservationPluginOptions::transitionMatrixPath);
+        parser->addOption<FloatType>("observationPluginOptions",
+                                     "zeta",
+                                     &HMIObservationPluginOptions::zeta);
     }
 
     const std::string BASE_PATH = "../oppt_install/oppt/";

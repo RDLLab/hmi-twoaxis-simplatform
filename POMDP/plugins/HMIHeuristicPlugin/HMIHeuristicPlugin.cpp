@@ -34,7 +34,8 @@ public:
             = static_cast<HMIHeuristicOptions*>(options_.get())->gridPath;
         grid_ = hmi::instantiateGrid(gridPath);
         paths_ = hmi::ShortestPaths(grid_);
-        helpReward = 100 * (paths_.getLongestPath() + 1);
+        FloatType rho = static_cast<HMIHeuristicOptions*>(options_.get())->rho;
+        helpReward = rho * (paths_.getLongestPath() + 1);
         std::string requestersPath
             = static_cast<HMIHeuristicOptions*>(options_.get())->requestersPath;
         requesters_ = hmi::instantiateTypesAndIDs(requestersPath);

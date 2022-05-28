@@ -29,7 +29,8 @@ public:
             = static_cast<HMIRewardOptions*>(options_.get())->gridPath;
         grid_ = hmi::instantiateGrid(gridPath);
         shortestPaths_ = hmi::ShortestPaths(grid_);
-        helpReward = 100 * (shortestPaths_.getLongestPath() + 1);
+        FloatType rho = static_cast<HMIRewardOptions*>(options_.get())->rho;
+        helpReward = rho * (shortestPaths_.getLongestPath() + 1);
         illegalMovePenalty = -helpReward / 2;
         return true;
     }

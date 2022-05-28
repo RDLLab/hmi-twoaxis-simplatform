@@ -15,6 +15,8 @@ public:
 
     std::string requestersPath = BASE_PATH + "models/HMIModel/HMIRequesters.txt";
 
+    FloatType rho = 100.0;
+
     static std::unique_ptr<options::OptionParser> makeParser() {
         std::unique_ptr<options::OptionParser> parser =
             PluginOptions::makeParser();
@@ -29,6 +31,9 @@ public:
         parser->addOption<std::string>("rewardPluginOptions",
                                        "requestersPath",
                                        &HMIRewardOptions::requestersPath);
+        parser->addOption<FloatType>("rewardPluginOptions",
+                                     "rho",
+                                     &HMIRewardOptions::rho);
     }
 
     const std::string BASE_PATH = "../oppt_install/oppt/";

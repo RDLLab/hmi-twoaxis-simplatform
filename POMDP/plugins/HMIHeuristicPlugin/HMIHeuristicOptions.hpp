@@ -19,6 +19,8 @@ public:
      *  requester. */
     std::string transitionMatrixPath = BASE_PATH + "models/HMIModel/HMITransitionMatrices.txt";
 
+    FloatType rho = 100.0;
+
     static std::unique_ptr<options::OptionParser> makeParser() {
         std::unique_ptr<options::OptionParser> parser =
             PluginOptions::makeParser();
@@ -36,6 +38,9 @@ public:
         parser->addOption<std::string>("heuristicPluginOptions",
                                        "transitionMatrixPath",
                                        &HMIHeuristicOptions::transitionMatrixPath);
+        parser->addOption<FloatType>("heuristicPluginOptions",
+                                     "rho",
+                                     &HMIHeuristicOptions::rho);
     }
 
     const std::string BASE_PATH = "../oppt_install/oppt/";
