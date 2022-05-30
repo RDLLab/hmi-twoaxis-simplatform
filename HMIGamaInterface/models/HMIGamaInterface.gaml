@@ -877,7 +877,7 @@ grid grid_cell width: grid_size height: grid_size neighbors: 4 {
 }
 
 experiment out type: gui {
-	// float minimum_cycle_duration <- 2.0#second;
+	float minimum_cycle_duration <- 1.0#second;
 	output {
 		display main_display {
 			grid grid_cell       lines: #black;
