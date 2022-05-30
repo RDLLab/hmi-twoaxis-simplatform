@@ -1,117 +1,114 @@
-# Updated POMDP Model
+# Towards Incorporating Empathy into Automated Decision-Making
 
 ## Overview
 
-This model contains helper robots and random agents. Random agents are agents that are dependent on others for help, such as elderly people or toddlers. Helper robots seek to maximise the amount of help they provide to random agents according to a certain ethical framework.
+This repository contains a simulation framework for visualising and experimenting with POMDP solvers.
+It also contains an instance of the On-line POMDP Planning Toolkit (OPPT), whose base repository can be found [here](https://github.com/RDLLab/oppt).
 
-### State, Actions and Observations
+## Installation
 
-A state for this problem comprises the Cartesian coordinates of each helper robot and each random agent, as well the condition of each random agent. The coordinates of each robot and agent are always known with 100% certainty. The condition of each random agent is partially observed.
+### Basic setup
 
-An action for this problem is a pair of Cartesian coordinates, taken from all valid coordinates for the problem (that is, coordinates that are on a grid and do not contain a wall). Sending an action to a helper robot indicates that that robot should move towards those coordinates and help any random agent at those coordinates. It also signals to any random agent at those coordinates to wait and receive help.
+If you haven't already, you will need to download the [GAMA IDE](https://gama-platform.org/download).
+After cloning this repository, you will first want to unzip the file `oppt_install.zip`.
+Then, you will want to open a Terminal window and the GAMA IDE.
 
-An observation for this problem comprises the believed condition of each random agent. As mentioned before, conditions are partially observable.
+### Setting up GAMA
 
-## GAMA
+When opening the GAMA IDE, you will be prompted to choose a Workspace.
+The default Workspace provided by GAMA will work fine.
+You may then be asked if you would like to create a new Workspace, if the default Workspace does not exist.
+You can click "Yes" here and proceed.
 
-### Grid
+After doing the above steps, you should have a GAMA window similar to this:
 
-The grid in this model is of width 5 and height 5. Its layout is as follows:
+![](assets/gama-intro.png)
 
-![grid.png](assets/grid.png)
+In the left-hand side column of this window, you will see several directories corresponding to different types of models.
+Right click on "User models".
+You will then see a drop-down menu.
+Hover over the "Import..." button, and you will see more options appear.
+Among these options, click "GAMA Project...".
 
-where white cells represent the floor and black cells represent walls.
+A pop-up window will then appear, titled *Import GAMA projects*, asking you which GAMA project you would like to import.
+Click on the "Browse..." button directly to the right of the "Select root directory:" option, as displayed here:
 
-Each cell in the grid has four neighbours, as defined by a [Von Neumann neighbourhood](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwj8lcPihPf1AhUYTWwGHUj2B5AQFnoECAIQAQ&url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FVon_Neumann_neighborhood&usg=AOvVaw2OMcpbgZ8joUN54Az165bN).
+![](assets/import-project.png)
 
-GAMA also keeps track of which helper robots and which random agents are in a given cell, for easy access to this data. These data can be accessed by the fields `robots_in_cell` and `dependents_in_cell` in the `grid_cell` species.
+A pop-up window of your filesystem will now open.
+You should navigate towards the location where you cloned this project, and then select the `HMIGamaInterface` directory to import.
+Once you have selected this directory, you should return to the previous pop-up window, titled *Import GAMA projects*.
+You should see an entry inside the box titled "Projects".
+If you see this, you can now click the "Finish" button at the bottom of the pop-up window.
+If you do not see this, we suggest you repeat the above steps again.
 
-### Simulation Model
+You should now have an entry under "User models" as such:
 
-The simulator interacts with the OPPT solver by sending and receiving information related to the execution of the model. There are three pipes used to do this: these are `pipeToGama` (used by GAMA to receive information from the solver), `statePipeToSolver` (used by GAMA to send information relating to state to the solver) and `observationPipeToSolver` (used by GAMA to send information relating to observations to the solver).
+![](assets/added-model.png)
 
-When the simulation starts, it also sends some information to the solver needed to run the simulation using a series of files. These files encode information about the problem’s grid and the details and condition change matrices for each random agent.
+### Setting up the Terminal environment
 
-Note that GAMA represents matrices in $$(x,y)$$ form as opposed to row-column form. An example is shown below, with the GAMA matrix representation shown on the left and the traditional matrix representation shown on the right.
+To run OPPT, we need to add some commands into the `.bashrc` file.
+In Unix systems, the `.bashrc` file is normally found in your home directory, also marked as `~`.
+Running `cd ~` and then editing `.bashrc` with your preferred text editor (for example, `nano .bashrc`) should open this file in an editable mode.
+
+You will then want to add the following commands to your `.bashrc` file:
 
 ```
-[0.9, 0.0, 0.0, 0.5]
-[0.1, 0.8, 0.0, 0.0]                    [0.0, 0.1, 1.0, 0.5]                   [0.0, 0.1, 0.0, 0.0]
+source /opt/ros/melodic/setup.sh
+export oppt_DIR=<path_to_this_directory>/oppt_install/lib/cmake/oppt
+source <path_to_this_directory>/oppt_install/share/oppt/setup.sh
 ```
 
-$${\begin{bmatrix} 0.9 & 0.1 & 0.0 & 0.0\\ 0.0 & 0.8 & 0.1 & 0.1\\ 0.0 & 0.0 & 1.0 & 0.0\\ 0.5 & 0.0 & 0.5 & 0.0\\ \end{bmatrix}}$$
+Because OPPT is plugin-based, it is necessary to use a file system API to obtain necessary resources, such as files, plugins, etc.
 
-GAMA also takes data from the solver’s configuration file, namely the initial state of the problem, so that it can initialise the locations and conditions of each helper robot and random agent.
+Once you have added these commands to your `.bashrc` file, you will want to close and restart the Terminal, so that these commands are run in your Bash environment.
+Then, `cd` so that you are at the root directory of this repository (that is, the directory that contains this README).
+Then, `cd` into the `oppt_hmi_scripts` directory. Run the following command:
 
-### Random Agents
+```
+./build.sh
+```
 
-Random agents are dependent on helper robots for help. Each random agent has a location, as well as a current condition. At present, there are four conditions in the problem. These are:
+This will build OPPT so that it is ready to run.
+This will take some time, so feel free to make yourself a cup of tea in the meantime.
 
-- `0` - “happy”
-- `1` - “agitated”
-- `2` - “sad”
-- `3` - “angry”
+### Running the simulation
 
-Random agents move between these conditions stochastically. If a random agent is happy, it will move one cell on the grid with a 50% chance. If a random agent shares a cell with a helper robot, its condition becomes `0` with 100% certainty.
+Before we run OPPT, we need to provide it with data.
+This data is obtained from the simulation environment, after we have made any modifications to it.
+So, we first need to run the simulation environment in GAMA to provide OPPT with the necessary data to run.
 
-Each random agent has a type and an ID. A random agent’s type determines what transition matrix it subscribes to with regards to changing conditions. At the moment, the two random agent types (elderly and toddler) have the same condition transition matrices, but this is subject to change. No two random agents can share the same type and ID.
+To run the simulation environment in GAMA, on the left-hand side column titled "Models", open up "User models", then inside "User models" open the directory "HMIGamaInterface", then inside "HMIGamaInterface" open the directory "models".
+Inside the "models" directory you should find the file `HMIGamaInterface.gaml`.
+Open this file (possibly by double clicking on it).
+You should have a GAMA window looking like this:
 
-### Helper Robots
+![](assets/gama-open.png)
 
-Helper robots serve to help random agents according to a certain ethical framework. This is defined in the OPPT solver. In the GAMA simulation, their state contains their location, their current action (as well as how to complete it), the location of each random agent in the problem, and their belief of the condition of each random agent in the problem.
+Near the top of the GAMA window, you should see a green button with a play sign and the text "out".
+Click this button to start the simulation.
 
-While the method in which helper robots observe random agent conditions is still to be defined, it has previously been defined by a combination of probability and “sight”. One agent “seeing” another is defined by the existence of a line `y = mx + c` existing between the two agents that does not cross a wall in the problem grid. If a helper robot can “see” a random agent, then it has a 0.8 probability of observing its condition.
+The simulation will start off paused.
+This is to provide you with time to modify the parameters of the model, which you can find on the left-hand side column of the window.
 
-If a helper robot has no action to complete, it will request a new action from the solver. This is done by listening to the named pipe `pipeToGama`. If it has made any observations while executing the previous action, it will send these prior to waiting for a new action. Once the helper robot has received an action, it will inform any random agents residing at that location to stay where they are while it comes to them for help.
+![](assets/initial-start.png)
 
-If a helper robot has an action to complete, it will continue to follow a pre-set path towards the location encoded in this action.
+There are three sections of parameters: "Robot", "Requesters" and "Hyperparameters".
+Feel free to experiment with the pre-defined values of these parameters.
+Note however, a few things:
+1. Locations of agents are represented by GAML's [`point` type](https://gama-platform.org/wiki/DataTypes#point). This data type represents a 3D point, and is encased by curly braces `{}`. Since our problem is two-dimensional, we are only interested in the first two elements of each point.
+2. Information about requesters are stored in GAML's [`map` type](https://gama-platform.org/wiki/DataTypes#map). This is represented as a [list](https://gama-platform.org/wiki/DataTypes#list) (enclosed by square brackets `[]`) of instances the [`pair` type](https://gama-platform.org/wiki/DataTypes#pair). A pair is defined as two elements connected by two colons, that is `<element1>::<element2>` makes up a pair.
+3. The location of each requester is represented of a map of requester types to lists of points, with each point corresponding to one requester of that type. Make sure that the number of random agents of each type and their locations match.
 
-If a helper robot happens to share the same cell as a random agent, it will immediately help that agent. This results in the random agent’s condition being `0` (happy) and the helper robot observing this new condition with 100% probability.
+Once you are ready, press the green play button again. You may need to double-click to see all the sprites; this is a bug in the implementation of GAMA.
+Then, press the green play button again to start the simulation.
 
-## OPPT Solver
+You will notice that the simulation does not run when you first start it. This is because it is waiting for the solver (inside OPPT) to provide it with an action.
+We now return to our open Terminal, `cd` to the `oppt_hmi_scripts` folder within this repository, and run
 
-### Solver
+```
+./execute.sh
+```
 
-At present, the solver for this problem uses the default ABT solver.
-
-### Initial State
-
-The initial state (and therefore, initial belief) is instantiated by the user via the GAMA experiment GUI.
-
-### Transition Plugin
-
-There are two transition plugins: one where OPPT runs its own internal model for planning, and another where it communicates with GAMA for execution. The model in both of these plugins is the same.
-
-The transition plugin takes a state $$S$$ and an action $$A$$ as input. As mentioned before, $$A$$ is a Cartesian coordinate $$(x,y)$$. The helper robot must move towards this location on the grid as its action. If there are any random agents at $$(x,y)$$, they immediately stop and cannot change condition until the helper robot arrives at their location. Once the helper robot has arrived at their location, their condition becomes 0 (happy). This behaviour applies in general: if a helper robot shares a cell with a random agent, the random agent’s condition instantly becomes 0.
-
-Executing an action as defined in this model takes up several “cycles” (individual timesteps) in GAMA. That is, while the helper robot is busy moving towards its destination, the other agents in the problem will also be doing certain actions. Each random agent follows a certain stochastic condition transition matrix depending on its type (examples include elderly, baby etc.). If a random agent’s condition is 0 (happy), there is also a 50% chance that it moves one space on the board in a random direction (unless it would move into a wall in that direction, in which case it doesn’t move).
-
-### Observation Plugin
-
-Like the transition plugins in this model, there are two observation plugins: one where OPPT runs its own internal model for planning, and another where it communicates with GAMA for execution. Again, the model in both of these plugins is the same.
-
-Given a state $$S$$ and an action $$A$$, the observation plugin will return a list of condition observations $$c$$, where observation $$c_i$$ corresponds to the observed condition of the $$i$$-th random agent $$R_i$$. As mentioned in the transition plugin, whenever a helper robot shares a cell with a random agent, the random agent’s condition instantly becomes 0. The helper robot is guaranteed to observe this agent’s new condition when this happens.
-
-Apart from this, helper robots have a `0.8` probability of observing a random agent’s condition at each timestep in GAMA, for each random agent.
-
-If no helper robot observes $$c_i$$ for random agent $$R_i$$ during the execution of $$A$$, then this value is the same value as $$c_i$$ in $$S$$.
-
-### Reward Plugin
-
-The reward plugin given to the solver at the end of any action is `C * N(a : cond(a) = 0)`, where:
-- `C` is a constant (in the source code, it is currently 100); and
-- `N(a : cond(a) = 0)` is the number of random agents in the problem with observed condition 0.
-
-The value of `C` in the source code is given by the constant `BASE_REWARD` in the file `POMDP/plugins/HMIShared/HMIDataStructures.hpp`.
-
-## Running the Simulation
-
-Because there is so much data being sent between GAMA and OPPT, it is important to follow these steps precisely.
-
-Before you run these steps, make sure you have unzipped `oppt_install.zip`.
-
-1. In the [GAMA IDE](https://gama-platform.org/download), import the directory `HMIGamaInterface`.
-2. Press the green play button at the top of the GAMA window. This will take you to the grid. You should see two categories on the left of the screen: `Robots` and `Random Agents`.
-3. If you wish to change the existing random agent settings, you may do so. In the category `Number of Random Agents`, you will see a map of random agent types corresponding to how many of them will be in the simulation. You can edit this map and, provided you add images and define a transition matrix, create new types as well. Make sure that the number of locations and conditions for each type in `Random Agent Locations` and `Random Agent Conditions` respectively match how many random agents are in the simulation as defined by `Number of Random Agents`. Note that the `Robot` parameters have not been extensively tested, and so are not guaranteed to work just yet.
-4. When you are satisfied with the parameters you have set, press the green play button again. Sometimes the agents in the problem do not appear straight away. If this happens, double click on the simulation, and they should appear. Some of the random agents may not be in the location specified initially. This is because random agents move in GAMA before the robot does. The program should be hanging at this point.
-5. Now, open a terminal and navigate to `oppt_hmi_scripts`. When you have arrived there, run the `execute.sh` script using the command `./execute.sh`. The model should now be running.
+The simulator should now be running.
