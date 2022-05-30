@@ -12,5 +12,5 @@ else
     mkdir build && cd build
     cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="$currentDir/../oppt_install" ..
     make && make install
-    cd $currentDir
 fi
+cd $currentDir
