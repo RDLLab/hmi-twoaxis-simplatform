@@ -55,7 +55,7 @@ Running `cd ~` and then editing `.bashrc` with your preferred text editor (for e
 You will then want to add the following commands to your `.bashrc` file:
 
 ```
-source /opt/ros/melodic/setup.sh
+source /opt/ros/<ROS DISTRIBUTION>/setup.sh
 export oppt_DIR=<path_to_this_directory>/oppt_install/lib/cmake/oppt
 source <path_to_this_directory>/oppt_install/share/oppt/setup.sh
 ```
@@ -71,7 +71,11 @@ Then, `cd` into the `oppt_hmi_scripts` directory. Run the following command:
 ```
 
 This will build OPPT so that it is ready to run.
-This will take some time, so feel free to make yourself a cup of tea in the meantime.
+Note that this script also contains the code that you have added to your `.bashrc` file.
+However, by default, it assigns the field `<ROS DISTRIBUTION>` to be `melodic`.
+If this is the wrong distribution for your setup, please replace `melodic` with whatever distribution you have available.
+
+Finally, running the `build` script will take some time, so feel free to make yourself a cup of tea in the meantime.
 
 ### Running the simulation
 
