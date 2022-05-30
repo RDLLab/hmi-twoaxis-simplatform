@@ -5,7 +5,7 @@ if ! [ -d oppt_install ] ; then
     echo 'Error: could not find directory `oppt_install`.'
     echo 'Have you remembered to unzip `oppt_install.zip`?'
 else
-    cd ../oppt_install/oppt/src
+    cd oppt_install/oppt/src
     if [ -d build ] ; then
         rm -r build
     fi
