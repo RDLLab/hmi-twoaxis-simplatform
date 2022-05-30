@@ -62,12 +62,8 @@ source <path_to_this_directory>/oppt_install/share/oppt/setup.sh
 
 Because OPPT is plugin-based, it is necessary to use a file system API to obtain necessary resources, such as files, plugins, etc.
 
-<<<<<<< HEAD
 Once you have added these commands to your `.bashrc` file, you will want to close and restart the Terminal, so that these commands are run in your Bash environment.
 Then, `cd` so that you are at the root directory of this repository (that is, the directory that contains this README).
-=======
-Once you have added these commands to your `.bashrc` file, `cd` so that you are at the root directory of this repository (that is, the directory that contains this README).
->>>>>>> 94d96214a5cb35869040abd08b789bed22ea53ab
 Then, `cd` into the `oppt_hmi_scripts` directory. Run the following command:
 
 ```
