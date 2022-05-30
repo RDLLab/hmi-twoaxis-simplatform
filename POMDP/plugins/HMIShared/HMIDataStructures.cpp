@@ -7,153 +7,100 @@ namespace hmi
 {
 
 Grid instantiateGrid(std::string &pathToGrid) {
-    // std::cout << "Running method instantiateGrid() of class HMIDataStructures..." << std::endl;
-
     // Extract the grid details from the plaintext and return them in struct form
     std::string cmd = "cat < " + pathToGrid;
     std::string gridDetails = execute(cmd.c_str());
-    // std::cout << "The grid is " << gridDetails << std::endl;
-    // std::cout << "Completed method instantiateGrid() of class HMIDataStructures..." << std::endl;
     return Grid(gridDetails);
 }
 
-std::vector<TypeAndId> instantiateTypesAndIDs(std::string &pathToRandomAgents) {
-    // std::cout << "Running method instantiateTypesAndIDs() of class HMIDataStructures..." << std::endl;
-
-    // Get details from the file containing details about all random agents.
-    std::string cmd = "cat < " + pathToRandomAgents;
+std::vector<TypeAndId> instantiateTypesAndIDs(std::string &pathToRequesters) {
+    // Get details from the file containing details about all requesters.
+    std::string cmd = "cat < " + pathToRequesters;
     std::string typesAndIDsDetails = execute(cmd.c_str());
     std::vector<TypeAndId> out;
-    // std::cout << "The types and IDs are " << typesAndIDsDetails << std::endl;
-
     while (!typesAndIDsDetails.empty()) {
-
-        // Extract the type of the current agent from the plaintext data.
+        // Extract the type of the current requester from the plaintext data.
         std::string type = typesAndIDsDetails.substr(0, typesAndIDsDetails.find(","));
-        // std::cout << "Type is " << type << std::endl;
         typesAndIDsDetails = typesAndIDsDetails.substr(typesAndIDsDetails.find(",") + 1);
-
-        // Extract the ID of the current agent from the plaintext data.
+        // Extract the ID of the current requester from the plaintext data.
         int id = std::stoi(typesAndIDsDetails);
-        // std::cout << "ID is " << std::to_string(id) << std::endl;
         typesAndIDsDetails = typesAndIDsDetails.substr(typesAndIDsDetails.find("\n") + 1);
-
         // Add this to the resulting vector.
         out.push_back(std::make_pair(type, id));
     }
-    // std::cout << "Completed method instantiateTypesAndIDs() of class HMIDataStructures..." << std::endl;
     return out;
 }
 
 std::unordered_map<std::string, TransitionMatrix> instantiateTransitionMatrices(std::string &pathToMatrices) {
-    // std::cout << "Running method instantiateTransitionMatrices() of class HMIDataStructures..." << std::endl;
     std::string cmd = "cat < " + pathToMatrices;
     std::string matricesDetails = execute(cmd.c_str());
-
-    // std::cout << "Matrix details are " << matricesDetails << std::endl;
-
     // Get the number of conditions from the file
     int numberOfConditions = std::stoi(matricesDetails);
-
     // Clip this part from the file
     matricesDetails = matricesDetails.substr(matricesDetails.find("\n") + 1);
-
     std::unordered_map<std::string, TransitionMatrix> typesToMatrices;
-
     while (!matricesDetails.empty()) {
-
-        // Extract the type of random agent and its corresponding transition matrix from the data, 
+        // Extract the type of requester and its corresponding transition matrix from the data, 
         // and add it to the map of types to transition matrices.
         std::string type = matricesDetails.substr(0, matricesDetails.find(","));
         std::string matrixDetails = matricesDetails.substr(0, matricesDetails.find("\n"));
         typesToMatrices.insert(std::pair<std::string, TransitionMatrix>(type, TransitionMatrix(numberOfConditions, matrixDetails)));
         matricesDetails = matricesDetails.substr(matricesDetails.find("\n") + 1);
     }
-    // std::cout << "Completed method instantiateTransitionMatrices() of class HMIDataStructures..." << std::endl;
-
     return typesToMatrices;
 }
 
 std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int destX, int destY) {
-    // std::cout << "Running method getShortestPath() of class HMIDataStructures..." << std::endl;
-    // std::cout << "From: (" << x << "," << y << ") To: (" << destX << "," << destY << std::endl;
-    
     // Instantiate data structures for storing which cells are nearby and which paths have
     // already been explored.
-    // std::cout << "Instantiating data structures..." << std::endl;
     std::set<std::string> explored;
     std::vector<CoordAndPath> frontier = {std::make_pair(Coordinate(x, y), "")};
-
     if (!grid.getGrid()[Coordinate(destX, destY).toPosition(grid)]) {
         return std::make_pair(-1, "");
     }
-
     while (!frontier.empty()) {
-
-        // std::cout << "Getting the first element from the frontier..." << std::endl;
         // Take the first element of the frontier.
         std::vector<CoordAndPath>::iterator frontIt = frontier.begin();
         Coordinate coord = frontIt->first;
-
-        // std::cout << "Getting the coordinates and path from this element..." << std::endl;
         // Break down the element's x- and y-coordinates and paths.
         int currentX = coord.getX();
         int currentY = coord.getY();
         std::string path = frontIt->second;
-
         if (currentX == destX && currentY == destY) {
-
             // We've found the shortest path to the destination coordinates,
             // so we return the distance and the path.
-            // std::cout << "Found destination!" << std::endl;
             int distance = path.length();
-            // std::cout << "Completed method getShortestPath() of class HMIDataStructures..." << std::endl;
             return std::make_pair(distance, path);
         }
 
         // Path can now be considered as explored, so we remove it from the frontier.
-        // std::cout << "Adding to explored..." << std::endl;
         explored.insert(path);
         frontier.erase(frontIt);
 
         for (size_t i = 0; i < std::min(MOVES.size(), DIRECTIONS.size()); ++i) {
-
             // Obtain new coordinates by (hypothetically) moving in the given direction.
-            // std::cout << "Moving in the direction " << MOVES[i] << std::endl;
             int newX = currentX + DIRECTIONS[i].getX();
             int newY = currentY + DIRECTIONS[i].getY();
             Coordinate newCoord(newX, newY);
-
             // Conditions to ensure moving in the given direction is actually possible.
-            // std::cout << "Deciding whether location (" << newX << "," << newY << ") is in bounds..." << std::endl;
             bool xInBounds = newX > -1 && newX < grid.getWidth();
             bool yInBounds = newY > -1 && newY < grid.getHeight();
-
             if (xInBounds && yInBounds) {
-
-                // std::cout << "(" << newX << "," << newY << ") to position is " << newCoord.toPosition(grid) << std::endl;
                 bool validCell = grid.getGrid()[newCoord.toPosition(grid)];
                 if (!validCell) {
                     continue;
                 }
-
                 // Add the new direction to the current path.
-                // std::cout << "Adding new direction to path..." << std::endl;
                 std::string newPath = path + MOVES[i];
-
                 // Create a new iterator to check if this new path already exists in
                 // the frontier.
-                // std::cout << "Checking if coordinate already exists in frontier..." << std::endl;
                 std::vector<CoordAndPath>::iterator frontierIt = frontier.begin();
-
                 for ( ; frontierIt != frontier.end(); ++frontierIt) {
-
                     // If the element already exists, then the iterator points to it.
                     if (frontierIt->first.getX() == newX && frontierIt->first.getY() == newY) break;
                 }
 
                 // Use an iterator to determine whether the new path has already been explored.
-                // std::cout << "Checking if path has already been explored..." << std::endl;
                 std::set<std::string>::iterator exploredIt = explored.find(newPath);
 
                 // Determine the total cost of this new path.
@@ -161,7 +108,6 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
                 int pathCost = newPath.length() + abs(destX - newX) + abs(destY - newY);
 
                 // Check whether these coordinates are in the frontier or the path has been explored.
-                // std::cout << "Checking if coordinates are in frontier or explored..." << std::endl;
                 bool notInFrontierOrExplored = frontierIt == frontier.end() && exploredIt == explored.end();
 
                 // If these coordinates are already in the frontier, then check if this new path to these
@@ -172,7 +118,6 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
 
                     // If this new path is shorter than the current shortest path in the frontier,
                     // erase the path in the frontier.
-                    // std::cout << "Checking if new path is shorter than existing one..." << std::endl;
                     if (lowerPathCostFrontier) frontier.erase(frontierIt);
 
                     // Instantiate an iterator to determine where to place this new path in the frontier
@@ -191,7 +136,6 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
                             // The cost of the new path is smaller than the cost of the given element in
                             // the frontier, so we insert the path into the index before the given element
                             // in the frontier.
-                            // std::cout << "added new path " << newPath << " to frontier!" << std::endl;
                             frontier.insert(insertIt, toAdd);
                             break;
                         }
@@ -203,8 +147,6 @@ std::pair<int, std::string> getShortestPath(const Grid &grid, int x, int y, int 
     }
 
     // Unsuccessful in finding the shortest path, so return a "null" result.
-    // std::cout << "Couldn't find a shortest path!" << std::endl;
-    // std::cout << "Completed method getShortestPath() of class HMIDataStructures..." << std::endl;
     return std::make_pair(-1, "");
 }
 

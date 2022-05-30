@@ -28,19 +28,15 @@ public:
     virtual ~HMIInitialBeliefPlugin() = default;
 
     virtual bool load(const std::string& optionsFile) override {
-        // std::cout << "Running method load() in class HMIInitialBeliefPlugin...\n";
         parseOptions_<HMIInitialBeliefOptions>(optionsFile);
         initialStateVec_ = static_cast<HMIInitialBeliefOptions*>(options_.get())->initialRobotStateVec;
-        VectorFloat initialRandomAgentState = static_cast<HMIInitialBeliefOptions*>(options_.get())->initialRandomAgentStateVec;
-        initialStateVec_.insert(std::end(initialStateVec_), std::begin(initialRandomAgentState), std::end(initialRandomAgentState));
-        // std::cout << "Completed method load() in class HMIInitialBeliefPlugin...\n";
+        VectorFloat initialRequesterState = static_cast<HMIInitialBeliefOptions*>(options_.get())->initialRequesterStateVec;
+        initialStateVec_.insert(std::end(initialStateVec_), std::begin(initialRequesterState), std::end(initialRequesterState));
         return true;
     }
 
     virtual RobotStateSharedPtr sampleAnInitState() override {
-        // std::cout << "Running method sampleAnInitState() in class HMIInitialBeliefPlugin...\n";
         RobotStateSharedPtr initState(new VectorState(initialStateVec_));
-        // std::cout << "Completed method sampleAnInitState() in class HMIInitialBeliefPlugin...\n";
         return initState;
     }
 

@@ -12,7 +12,7 @@ public:
     virtual ~HMIInitialBeliefOptions() = default;
 
     VectorFloat initialRobotStateVec;
-    VectorFloat initialRandomAgentStateVec;
+    VectorFloat initialRequesterStateVec;
 
     static std::unique_ptr<options::OptionParser> makeParser() {
         // std::cout << "Running method makeParser() in class HMIInitialBeliefOptions...\n";
@@ -29,8 +29,8 @@ public:
                                        "initialRobotState",
                                        &HMIInitialBeliefOptions::initialRobotStateVec);	
         parser->addOption<VectorFloat>("initialBeliefOptions",
-                                       "initialRandomAgentState",
-                                       &HMIInitialBeliefOptions::initialRandomAgentStateVec);
+                                       "initialRequesterState",
+                                       &HMIInitialBeliefOptions::initialRequesterStateVec);
         // std::cout << "Completed method addHMIInitialBeliefOptions() in class HMIInitialBeliefOptions...\n";
     }
 
